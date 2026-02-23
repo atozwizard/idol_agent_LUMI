@@ -73,4 +73,4 @@ AS $$
 $$;
 
 -- 데이터 잘 들어갔나 확인하는 쿼리
--- SELECT * FROM documents LIMIT 5;
+SELECT * FROM documents LIMIT 20;
