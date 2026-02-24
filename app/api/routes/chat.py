@@ -50,7 +50,7 @@ async def chat(request : ChatRequest) -> ChatResponse:
             "intent" : None,
             "retrieved_docs": [],
             "tool_name": None,
-            "tool_args": None,
+            "tool_args": {},
             "tool_result": None,
             "session_id": request.session_id,
             "user_id": request.user_id
