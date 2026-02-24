@@ -34,4 +34,59 @@ uv sync
     - [v] __main__ 실행 블록
 
 
+# service deployment 2강
+- langgraph 구현
+## 오늘 할 것
+- 노트북 파일을 스크립트 파일로 변환
+    - 그 과정에서 필요한 것들 추가(DB연결)
+
+## TODO 정리
+- [ ] graph 구현 : notebook to py
+    - [ ] state.py
+    - [ ] nodes.py
+        - [ ] router : 메시지 의도 분류
+            - core/prompt.py
+        - [ ] rag : 문서검색
+            - [ ] repositories
+        - [ ] tool : 툴 실행
+            - [ ] tools/executor.py
+        - [ ] response 노드 구현
+    - [ ] edges.py
+    - [ ] graph.py
+- [ ] api server
+    - [ ] chat.py
+- [ ] ui.py
+- [ ] main.py
+
+
+
+
+
 uv run uvicorn app.main:app --reload --reload-dir app --port 8000
+
+
+
+### 프로젝트 구조
+
+```
+app/
+├── core/
+│   ├── config.py          ← 설정 관리 (pydantic-settings)
+│   └── prompts.py         ← 프롬프트 분리
+├── schemas/
+│   └── chat.py            ← API 요청/응답 모델
+├── graph/                  ← 노트북에서 만든 에이전트
+│   ├── state.py           ← State 정의
+│   ├── nodes.py           ← 노드 구현
+│   ├── edges.py           ← 라우팅 로직
+│   └── graph.py           ← 그래프 조립 + 싱글톤
+├── repositories/           ← DB 접근 계층 (Mock → Real)
+│   ├── rag.py             ← RAG 검색 (Supabase pgvector)
+│   ├── schedule.py        ← 스케줄 조회
+│   └── fan_letter.py      ← 팬레터 저장
+├── tools/
+│   └── executor.py        ← Tool 실행 (Repository 활용)
+├── api/routes/
+│   └── chat.py            ← REST API 엔드포인트
+└── main.py                ← FastAPI 앱 (lifespan, CORS)
+```

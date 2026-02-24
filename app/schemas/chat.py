@@ -56,6 +56,12 @@ class ChatResponse(BaseModel):
         tool_used: 사용된 tool 이름
         cached: 캐시된 응답 여부
         timestamp: 응답 생성 시간
+    
+    Example:
+        >>> response = ChatResponse(
+        ...     message="금요일에 뮤직뱅크 나와!",
+        ...     tool_used="get_schedule",
+        ... )
     """
     # Field : 필드에 대한 추가적인 정보(메타데이터)와 검증 조건 설정
     message: str = Field(
