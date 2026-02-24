@@ -41,24 +41,30 @@ uv sync
     - 그 과정에서 필요한 것들 추가(DB연결)
 
 ## TODO 정리
-- [ ] graph 구현 : notebook to py
-    - [ ] state.py
-    - [ ] nodes.py
-        - [ ] router : 메시지 의도 분류
+- [v] graph 구현 : notebook to py
+    - [v] state.py
+    - [v] nodes.py
+        - [v] router : 메시지 의도 분류
             - core/prompt.py
-        - [ ] rag : 문서검색
-            - [ ] repositories
-        - [ ] tool : 툴 실행
-            - [ ] tools/executor.py
-        - [ ] response 노드 구현
-    - [ ] edges.py
-    - [ ] graph.py
-- [ ] api server
-    - [ ] chat.py
-- [ ] ui.py
-- [ ] main.py
+        - [v] rag : 문서검색
+            - [v] repositories
+        - [v] tool : 툴 실행
+            - [v] tools/executor.py
+        - [v] response 노드 구현
+    - [v] edges.py
+    - [v] graph.py
+- [v] api server
+    - [v] chat.py
+- [v] ui.py
+- [v] main.py
 
-
+## 오늘 강의 핵심
+- 바닥부터 다 구현을 해야한다가 아님
+- 구현하는 과정을 익히기 위해 본것
+    - 노트북 파일에서 스크립트로 변화할 때 이렇게 하면 되는구나, 감
+    - 코드 복습
+    - print
+    
 
 
 

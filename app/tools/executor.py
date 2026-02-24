@@ -8,12 +8,13 @@ send_fan_letter : supabase에 팬레터 저장
 recommend_song : Mock
 get_weather : Mock
 """
+import random
 from typing import Any, Optional
 
 from app.repositories.schedule import ScheduleRepository
 from app.repositories.fan_letter import FanLetterRepository
 from loguru import logger
-from
+
 # 🔶 Mock 데이터: 루미의 노래 목록
 
 
@@ -110,11 +111,11 @@ class ToolExecutor:
         supabase에서 스케줄 데이터 조회"""
         start_date = args.get("start_date")
         end_date = args.get("end_date")
-        event_type = args.get("event_typs", "all")
+        event_type = args.get("event_type", "all")
         
         logger.info(f"스케줄 조회: {start_date} ~ {end_date}, type={event_type}")
         
-        self.schedule_repo.get_schedules(
+        schedules = await self.schedule_repo.get_schedules(
             start_date = start_date,
             end_date=end_date,
             event_type=event_type if event_type != "all" else None
@@ -137,4 +138,68 @@ class ToolExecutor:
             }
         }
         
+    async def send_fan_letter(
+        self,
+        args: dict,
+        session_id :str,
+        user_id: Optional[str]
+    ) -> dict:
+        """supabase에 팬레터 저장"""
+            
+        category = args.get("category", "other")
+        message = args.get("message","")
         
+        logger.info(f"팬레터 저장: category={category}, {message[:50]}...")
+        
+        letter_id = await self.fan_letter_repo.create(
+            session_id=session_id,
+            user_id=user_id,
+            category=category,
+            message=message
+        
+        )
+        
+        return {
+            "success":True,
+            "data": {
+                "letter_id":letter_id,
+                "message": "팬레터가 잘 전달되었어요!"
+            } 
+        }
+        
+    async def _recommend_song(self,args:dict) -> dict:
+        """Mock: 하드코딩된 노래 목록에서 추천
+        Args:
+            args: {"mood": str}
+        Returns:
+            dict: 추천 노래 정보
+        """
+        mood = args.get("mood","happy")
+        logger.info(f"노래 추천: mood={mood}")
+        
+        songs = LUMI_SONGS.get(mood,LUMI_SONGS["happy"])
+        selected = random.choice(songs)
+        
+        return {
+            "success": True,
+            
+        }
+        
+    async def _get_weather(self, args:dict) -> dict:
+        """
+        Mock: 하드코딩된 날씨 정보 반환
+
+        Args:
+            args : {} (파라미터 없음)
+
+        Returns:
+            dict: 날씨 정보
+        """
+        logger.info("날씨 조회(Mock)")
+        
+        return {
+            "success":True,
+            "data": MOCK_WEATHER,
+            "mock":True,
+            
+        }

@@ -7,7 +7,7 @@ __all__=["RAGRepository"]
 
 
 _supabase_client = None
-def get_supabse_client():
+def get_supabase_client():
     """Supabase 클라이언트 반환(싱글톤 패턴)
     
     init.py 에 있는 이유 -> schedule.py에서 사용하고, fan_letter.py에서도 사용->반복되서 사용"""

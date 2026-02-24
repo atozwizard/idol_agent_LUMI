@@ -16,7 +16,9 @@ supabase에서 루미의 스케줄 데이터를 조회하는 기능을 담당하
 from typing import Optional
 from loguru import logger
 
-from . import get_supabase_client
+from app.repositories import get_supabase_client
+
+
 
 
 class ScheduleRepository:

@@ -6,10 +6,18 @@ Lumi Agent FastAPI 애플리케이션
 """
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from loguru import logger
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
+
 import sys
+
+import gradio as gr
+from loguru import logger
+from app.core.config import settings
+from app.api.routes import api_router
+from app.graph import get_lumi_graph
+from app.ui import create_demo
+
 
 # loguru : python 기본 logging 모듈보다 사용하기 쉽고, 강력한 로깅 라이브러리
 # 색상 출력, 비동기 로깅
@@ -46,6 +54,14 @@ async def lifespan(app: FastAPI):
     
     _validate_settings()
     
+    try:
+        from app.graph import get_lumi_graph
+        graph = get_lumi_graph()
+        logger.info("langgraph 그래프 컴파일 완료")
+    except Exception as e:
+        logger.error(f"langgraph 초기화 실패 : {e}")
+    
+    
     yield  # 이 지점에서 서버가 요청을 처리함 (FastAPI는 라우터 등록 등 다른 초기화 작업을 수행)
     
     # 애플리케이션 종료 시 실행되는 코드
@@ -77,7 +93,7 @@ app = FastAPI(
     - FastAPI: 웹 프레임워크
     - Supabase: 데이터베이스
     """,
-    version="0.1.0",
+    version="0.2.0",
     lifespan = lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -102,20 +118,32 @@ app.add_middleware(
 
 )
 
+app.include_router(api_router, prefix = "/api/v1")
+
+gradio_app = create_demo()
+app = gr.mount_gradio_app(app, gradio_app, path="/ui")
+logger.info("gradio ui 마운트 완료: /ui")
+
 # FastAPI 에서 API 엔드포인트를 정의
     # @app.get("/") : GET 요청처리, 데이터 조회. HTTP GET 메서드로 "/" 경로에 대한 요청을 처리하는 엔드포인트 정의
     # @app.post("/chat") : POST요청을 처리, 데이터 생성. HTTP POST 메서드로 "/chat" 경로에 대한 요청을 처리하는 엔드포인트 정의
     # "/" : URL 경로(endpoint)를 의미
     # tags : api 문서에서 그룹화할 태그 이름
 @app.get("/", tags=["Root"])
+def root():
+    """루트로 접속했을 때(/) -> gradio 나오도록 하고싶다"""
+    return RedirectResponse(url="/ui")
+    
+@app.get("/api", tags=["Root"])
 async def root() -> dict:
     return {
         "message" : "Lumi Agent API 서버가 정상적으로 실행되고 있습니다.",
-        "version" : "0.1.0",
+        "version" : "0.2.0",
         "docs": {
             "swagger": "/docs",
             "redoc": "/redoc",       
-        }
+        },
+        "ui":"/ui"
     }
 if __name__ == "__main__":
     import uvicorn
@@ -131,3 +159,5 @@ if __name__ == "__main__":
         port=settings.port,
         reload=settings.debug,  # 디버그 모드에서는 코드 변경 시 자동으로 서버 재시작
     )
+    
+    

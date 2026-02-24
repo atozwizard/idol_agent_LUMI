@@ -44,6 +44,13 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
+    
     
 # lru_cache(Least Recently Used Cache) : 
     # 싱글톤 패턴과 유사한 효과를 내는 데코레이터
