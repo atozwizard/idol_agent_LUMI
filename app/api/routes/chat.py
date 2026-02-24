@@ -1,5 +1,9 @@
 """채팅 api 라우트
-langgraph에이전트를 호출하여 사용자 메시지를 처리"""
+langgraph에이전트를 호출하여 사용자 메시지를 처리
+
+엔드포인트:
+    POST /chat/          - 채팅 메시지 전송
+"""
 
 from fastapi import APIRouter, HTTPException
 from langchain_core.messages import HumanMessage
@@ -17,7 +21,23 @@ router = APIRouter()
 async def chat(request : ChatRequest) -> ChatResponse:
     
     """채팅 엔드포인트
-    사용자 메시지를 langgraph 에이전트로 처리하고 응답을 반환합니다."""
+    사용자 메시지를 langgraph 에이전트로 처리하고 응답을 반환합니다.
+    
+    Args:
+        request: 채팅 요청 (message, session_id, user_id)
+
+    Returns:
+        ChatResponse: 루미의 응답
+
+    Raises:
+        HTTPException: 에이전트 처리 오류 시
+
+    Example:
+        ```bash
+        curl -X POST "http://localhost:8000/api/v1/chat/" \\
+            -H "Content-Type: application/json" \\
+            -d '{"message": "오늘 방송 언제야?", "session_id": "user123"}'
+    """
     
     logger.info(f"채팅 요청: session={request.session_id}, message={request.message[:50]}")
     try:

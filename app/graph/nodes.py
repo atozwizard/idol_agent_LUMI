@@ -1,5 +1,16 @@
 #router -> rag -> tool
+"""
+LangGraph 그래프의 노드(Node) 정의
 
+노드는 그래프에서 실제 작업을 수행하는 단위입니다.
+각 노드는 State를 받아서 업데이트할 필드만 반환합니다.
+
+이 파일에서 정의하는 노드:
+    1. router_node: 사용자 의도 분류 (chat/rag/tool)
+    2. rag_node: 문서 검색 및 컨텍스트 생성
+    3. tool_node: Tool 실행
+    4. response_node: 최종 응답 생성
+"""
 from pydantic import BaseModel, Field
 from langchain_upstage import ChatUpstage
 from langchain_core.messages import HumanMessage, AIMessage
@@ -78,6 +89,16 @@ async def router_node(state: LumiState) -> dict:
 async def rag_node(state: LumiState) -> dict:
     """
     RAG노드 : 관련 문서 검색
+        Supabase pgvector를 사용한 RAG 구현
+    - 활성 문서(v2.5)만 검색하여 폐기 문서(v1.0) 제외
+    - 메타데이터 필터링으로 세계관 일관성 유지
+
+    Args:
+        state: 현재 에이전트 상태
+
+    Returns:
+        dict: 업데이트할 상태 필드
+            - retrieved_docs: 검색된 문서 내용 목록
     """
     logger.info("[RAG] 문서 검색 시작")
     
@@ -87,13 +108,21 @@ async def rag_node(state: LumiState) -> dict:
     try:
         # RAG에 대한 결과를 가지고오면 됨
         rag_repo = get_rag_repository()
-        docs = await rag_repo.search_simailar(
+        docs = await rag_repo.search_similar(
             query=user_input,
             k=3,
             filter_status="active"
         )
-        
+        # 검색결과에서 content만 추출
         retrieved_docs = [["content"] for doc in docs]
+        
+        # 검색 결과 로깅 (디버깅용)
+        for i, doc in enumerate(docs):
+            version = doc.get("metadata", {}).get("version", "?")
+            similarity = doc.get("similarity", 0)
+            logger.debug(f"  [{i+1}] v{version} (sim: {similarity:.3f}): {doc['content'][:50]}...")
+
+        
         logger.info(f"[RAG] 검색 완료: {len(retrieved_docs)}개 문서")
         
     except Exception as e:
@@ -116,6 +145,17 @@ async def tool_node(state: LumiState) -> dict:
     tool_name = state["tool_name"]
     tool_args = state["tool_args"] or {}
 
+    # 방어 코드: tool_name이 None이면 에러 반환
+    if not tool_name:
+        logger.error("🔧 [Tool] tool_name이 None!")
+        return {
+            "tool_result": {
+                "success": False,
+                "error": "Tool 이름이 지정되지 않았어요.",
+            },
+        }
+
+
     print(f"[Tool] 실행: {tool_name}, 인자: {tool_args}")
 
     # 실제로는 DB 조회, API 호출 등을 해야 함
@@ -125,7 +165,7 @@ async def tool_node(state: LumiState) -> dict:
         tool_name = tool_name,
         tool_args=tool_args,
         session_id=state["session_id"],
-        user_id=state.get["user_id"]
+        user_id=state.get("user_id")
     
     )
     
@@ -145,10 +185,26 @@ async def response_node(state: LumiState) -> dict:
     chat: 일반대화
     rag :검색된 문서 기반 응답
     tool : Tool결과 기반
+    
+    💬 응답 노드: 최종 응답 생성
+
+    라우팅 결과에 따라 적절한 응답을 생성합니다:
+        - chat: 일반 대화 응답
+        - rag: 검색된 문서 기반 응답
+        - tool: Tool 결과 기반 응답
+
+    Args:
+        state: 현재 에이전트 상태
+
+    Returns:
+        dict: 업데이트할 상태 필드
+            - messages: AI 응답 메시지 추가
     """
+    logger.info(f"💬 [Response] 응답 생성 시작 (intent: {state['intent']})")
     
     llm = get_llm()
     user_input = state["messages"][-1].content
+    
     intent = state["intent"]
 
     if intent == "rag":
@@ -173,7 +229,13 @@ tool_name : {tool_name}, tool_result :{json.dumps(tool_result, ensure_ascii=Fals
     else:
         system_prompt = RESPONSE_PROMPT
     #대화 히스토리 관리, 과거 대화를 전달하면 맥락을 이해하면 좋겠음
+    
+    # 대화 히스토리를 LLM에 전달하여 과거 질문 기억
+    # 최근 6개 메시지 (3턴: user+ai 쌍)를 히스토리로 포함
+    # 마지막 메시지(현재 질문)는 별도로 추가하므로 제외
     history_messages = state["messages"][:-1][-6] if len(state["messages"]) > 1 else []
+    
+    # 히스토리를 텍스트로 변환
     history_text = ""
     if history_messages:
         history_parts = []
@@ -193,8 +255,11 @@ tool_name : {tool_name}, tool_result :{json.dumps(tool_result, ensure_ascii=Fals
 
     try:
         response = await llm.ainvoke(messages)
+        logger.info(f"💬 [Response] 응답 생성 완료")
         return {"messages": [AIMessage(content=response.content)]}
+    
     except Exception as e:
+        logger.error(f"응답 생성 오류: {e}")
         return {"messages": [AIMessage(content=f"미안, 오류가 생겼어! 다시 말해줄래? ({e})")]}
 
 

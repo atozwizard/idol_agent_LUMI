@@ -6,13 +6,15 @@ tool 이름과 인자를 받아서 적절한 함수를 호출하고 결과를 �
 get_schedule : supabase에서 스케줄 조회
 send_fan_letter : supabase에 팬레터 저장
 recommend_song : Mock
-get_weather : Mock
+get_weather : openweathermap 호출
 """
 import random
+import httpx
 from typing import Any, Optional
 
 from app.repositories.schedule import ScheduleRepository
 from app.repositories.fan_letter import FanLetterRepository
+from app.core.config import settings
 from loguru import logger
 
 # 🔶 Mock 데이터: 루미의 노래 목록
@@ -185,21 +187,70 @@ class ToolExecutor:
             
         }
         
-    async def _get_weather(self, args:dict) -> dict:
-        """
-        Mock: 하드코딩된 날씨 정보 반환
+#     async def _get_weather(self, args:dict) -> dict:
+#         """
+#         Mock: 하드코딩된 날씨 정보 반환
 
-        Args:
-            args : {} (파라미터 없음)
+#         Args:
+#             args : {} (파라미터 없음)
 
-        Returns:
-            dict: 날씨 정보
-        """
-        logger.info("날씨 조회(Mock)")
+#         Returns:
+#             dict: 날씨 정보
+#         """
+#         logger.info("날씨 조회(Mock)")
         
-        return {
-            "success":True,
-            "data": MOCK_WEATHER,
-            "mock":True,
+#         return {
+#             "success":True,
+#             "data": MOCK_WEATHER,
+#             "mock":True,
             
-        }
+#         }
+        
+#         # 한국어 날씨 설명과 섭씨온도로 조회
+# url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric&lang=kr"
+
+
+
+    async def _get_weather(self, args: dict) -> dict:
+        """
+        위도(lat)와 경도(lon)를 사용하여 현재 날씨 정보 조회
+        """
+        # args에서 좌표를 가져오고, 없으면 기본값(서울) 사용
+        lat = args.get("lat", 37.5665)
+        lon = args.get("lon", 126.9780)
+        api_key = settings.openweathermap_api_key
+
+        if not api_key:
+            logger.error("OpenWeatherMap API Key가 설정되지 않았습니다.")
+            return {"success": False, "message": "API Key missing"}
+
+        # 요청 URL 구성 (f-string 방식)
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric&lang=kr"
+
+        try:
+            async with httpx.AsyncClient() as client:
+                logger.info(f"날씨 조회 시작 (좌표): {lat}, {lon}")
+                response = await client.get(url, timeout=5.0)
+                
+                # 응답 상태 확인
+                response.raise_for_status()
+                data = response.json()
+
+                return {
+                    "success": True,
+                    "data": {
+                        "location": data.get("name"),  # 좌표 기준 도시명
+                        "weather": data["weather"][0]["description"], # 한국어 설명
+                        "temp": data["main"]["temp"],
+                        "humidity": data["main"]["humidity"],
+                        "feels_like": data["main"]["feels_like"]
+                    },
+                    "mock": False
+                }
+
+        except httpx.HTTPStatusError as e:
+            logger.error(f"날씨 API 오류: {e.response.status_code}")
+            return {"success": False, "message": f"API Error: {e.response.status_code}"}
+        except Exception as e:
+            logger.error(f"날씨 조회 실패: {str(e)}")
+            return {"success": False, "message": str(e)}
