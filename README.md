@@ -66,6 +66,25 @@ uv sync
     - print
     
 
+# service deploy 3강
+## 오늘 할 일 (목표)
+- 2강에서 만든 MVP -> 개선
+- 스트리밍을 구현할 예정, 노드 상태 + 토큰 스트리밍을 동시에 보여주기
+- 실시간 스트리밍 !
+
+## TODO
+- [v] app/schemas/chat.py : StreamEvent, to_see()
+- [v] app/api/routes/chat.py : SSE 구현, stream_with_status 함수
+    - [V] SSE 엔드포인트 추가
+- [v] app/ui.py : 스트리밍 데이터를 받아서 처리할 수 있도록 함수
+- [v] UI에서 확인을 할 예정
+- [v] router쪽의 이슈 해결을 위한 코드
+
+## 정리
+- SSE 구현을 위해서 어떻게 하는가?
+- yield 이벤트 발생 -> 이벤트 형태 정의 -> 그거에 맞게 로직
+- stream_with_status 로직 : 읽어보기
+- 바닥부터 다 구현이 아니라, 일단 구현된 것을 읽을 수 있는지? -> 이해가 되는지?
 
 
 uv run uvicorn app.main:app --reload --reload-dir app --port 8000

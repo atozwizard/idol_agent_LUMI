@@ -3,14 +3,43 @@ Gradio 기반 채팅 인터페이스
 
 FastAPI에 마운트되어 /ui 경로에서 서비스됩니다.
 
+변경사항:
+    - Direct Call로 stream_tokens 함수 직접 호출
+    - 실시간 토큰 스트리밍 (thinking → tool → response)
+    - localhost/IPv6 문제 완전 해결
+
 접속:
     - 로컬: http://localhost:8000/ui
 """
 
-import gradio as gr
-import httpx
+import re
 import uuid
+
+import gradio as gr
 from loguru import logger
+
+
+
+def sanitize_for_gradio_markdown(text: str) -> str:
+    """
+    Gradio 마크다운 렌더링 문제 수정
+
+    문제 1: 단일 틸다(~)가 취소선(~~)으로 해석됨
+        - "루미너스~! 😄 아마..." → 취소선 발생
+        - 해결: 단일 ~를 전각 물결표(～)로 변환
+
+    문제 2: 볼드(**)가 특수문자와 붙으면 렌더링 실패
+        - **"텍스트"** → 볼드 안 됨
+        - 해결: 따옴표 위치 조정
+    """
+    # 1. 단일 틸다 → 전각 물결표 (취소선 방지)
+    text = re.sub(r"(?<!~)~(?!~)", "～", text)
+
+    # 2. 볼드 마크다운 정리 (따옴표와 충돌 방지)
+    text = re.sub(r'\*\*"', '"**', text)
+    text = re.sub(r'"\*\*', '**"', text)
+
+    return text
 
 
 # ✨ 커스텀 CSS - 버추얼 아이돌 채팅앱 테마
@@ -392,19 +421,17 @@ button.copy {
     display: none !important;
 }
 
-/* ===== Processing 텍스트 숨기기 ===== */
-.chatbot .pending,
-.chatbot .generating,
-.chatbot [data-testid="bot"][class*="pending"],
-.message.pending .message-content::after {
-    content: none !important;
-}
-
-/* processing... 텍스트 색상 (숨길 수 없으면 투명하게) */
-.chatbot .bot.pending .message-bubble,
-.chatbot .generating {
-    color: transparent !important;
-    background: rgba(255, 107, 157, 0.1) !important;
+/* ===== Processing 타이머 숨기기 ===== */
+/* 어차피 첫 yield에서 사라지므로 깔끔하게 숨김 */
+.generating,
+.progress-text,
+.eta-bar,
+.progress-bar,
+.progress-level,
+.meta-text,
+.meta-text-center,
+.timer {
+    display: none !important;
 }
 
 /* ===== 반응형 ===== */
@@ -436,63 +463,280 @@ THEME = gr.themes.Base(
     neutral_hue="slate",
 )
 
+# OG 이미지용 BASE_URL (상대 경로 사용)
+BASE_URL = ""
+
+# 메타 태그 (Open Graph, favicon)
+# - 카카오톡, 슬랙 등에서 링크 공유 시 미리보기 표시
+# - 브라우저 탭 아이콘 설정
+# - ⚠️ OG 이미지는 절대 URL + PNG/JPG 권장 (SVG는 일부 플랫폼에서 미지원)
+META_TAGS = f"""
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<link rel="apple-touch-icon" href="/static/favicon.svg">
+
+<!-- Primary Meta Tags -->
+<meta name="title" content="루미(LUMI) - 버추얼 아이돌 AI 에이전트">
+<meta name="description" content="버추얼 아이돌 루미와 대화하고, 스케줄 확인하고, 팬레터도 보내보세요!">
+<meta name="theme-color" content="#ff6b9d">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="{BASE_URL}">
+<meta property="og:title" content="루미(LUMI) - 버추얼 아이돌 AI 에이전트">
+<meta property="og:description" content="버추얼 아이돌 루미와 대화하고, 스케줄 확인하고, 팬레터도 보내보세요!">
+<meta property="og:image" content="{BASE_URL}/static/og-image.png">
+<meta property="og:site_name" content="Lumi Agent">
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="{BASE_URL}">
+<meta property="twitter:title" content="루미(LUMI) - 버추얼 아이돌 AI 에이전트">
+<meta property="twitter:description" content="버추얼 아이돌 루미와 대화하고, 스케줄 확인하고, 팬레터도 보내보세요!">
+<meta property="twitter:image" content="{BASE_URL}/static/og-image.png">
+"""
+
 
 def create_chat_handler():
     """
-    채팅 핸들러 생성 (Direct Call 방식)
+    스트리밍 채팅 핸들러 생성 (Direct Call 방식)
+
+    HTTP 요청 대신 stream_with_status 함수를 직접 호출하여
+    네트워크(localhost/port) 문제 없이 동작합니다.
+
+    진행 상태 + 토큰 스트리밍:
+        - 노드 상태: "🔀 루미 생각 중..." 채팅창에 표시
+        - 토큰 스트리밍: 상태가 토큰으로 대체됨
+
+    🔧 수정: 세션 ID를 파라미터로 받아 사용자별 격리
     """
-    from app.api.routes.chat import chat
-    from app.schemas.chat import ChatRequest
+    # Direct Call - stream_with_status 직접 호출 (노드 상태 + 토큰)
+    from app.api.routes.chat import stream_with_status
 
-    async def chat_with_lumi(message: str, history: list, session_id: str) -> str:
+    async def chat_with_lumi_stream(message: str, history: list, session_id: str):
         """
-        루미와 대화합니다. (Direct Call)
+        진행 상태 + 토큰 스트리밍으로 루미와 대화합니다. (Direct Call)
 
-        HTTP 요청 대신 내부 컨트롤러를 직접 호출하여
-        네트워크(localhost/port) 문제 없이 동작합니다.
+        stream_with_status 함수를 직접 호출하여
+        진행 상태와 토큰을 실시간으로 받아 yield합니다.
 
         Args:
             message: 사용자 메시지
             history: 대화 히스토리
             session_id: 사용자별 고유 세션 ID (gr.State로 관리)
+
+        이벤트 흐름:
+            1. status: "🔀 루미 생각 중..." → 채팅창에 표시
+            2. token: 토큰이 오면 상태를 대체
+            3. final: 최종 응답
         """
         if not message.strip():
-            return "메시지를 입력해주세요!"
+            yield "메시지를 입력해주세요!"
+            return
 
         try:
-            # 1. 요청 객체 생성
-            request = ChatRequest(
+            # Direct Call - stream_with_status 함수 직접 호출
+            current_response = ""
+
+            async for status, token, final, tool_used in stream_with_status(
                 message=message,
-                session_id=session_id
-            )
+                session_id=session_id,
+                user_id=None,
+            ):
+                # 진행 상태 메시지 (토큰 스트리밍 전에만 표시)
+                if status and not current_response:
+                    yield status
 
-            # 2. 컨트롤러 직접 호출 (await)
-            response = await chat(request)
+                # 토큰 스트리밍 - 글자 단위로 누적 (상태 메시지 대체)
+                if token:
+                    current_response += token
+                    yield sanitize_for_gradio_markdown(current_response)
 
-            # 3. 응답 처리
-            ai_message = response.message
-            
-            # Tool 사용 여부 표시
-            if response.tool_used:
-                ai_message += f"\n\n✨ _{response.tool_used}_"
-
-            return ai_message
+                if final:
+                    # 최종 응답 (마크다운 수정 적용)
+                    final_content = final
+                    if tool_used:
+                        final_content += f"\n\n✨ _{tool_used}_"
+                    yield sanitize_for_gradio_markdown(final_content)
 
         except Exception as e:
             logger.error(f"채팅 오류: {e}")
-            return f"앗, 오류가 발생했어요: {str(e)}"
+            yield f"앗, 오류가 발생했어요: {str(e)}"
 
-    return chat_with_lumi
+    return chat_with_lumi_stream
 
 
-def create_demo() -> gr.Blocks:
+# =============================================================
+# SSE 방식 - 프론트/백엔드 분리 시 사용
+# =============================================================
+
+
+def create_chat_handler_sse(api_base_url: str = "http://localhost:8000"):
+    """
+    SSE 스트리밍 채팅 핸들러 (HTTP 방식)
+
+    FastAPI의 /chat/stream 엔드포인트를 SSE로 호출합니다.
+    프론트엔드와 백엔드가 분리된 실무 환경에서 사용하는 방식입니다.
+
+    ⚠️ 주의:
+        - localhost 연결 문제가 있을 수 있음 (Docker 등)
+        - 같은 프로세스면 Direct Call 방식이 더 간단함
+
+    🔧 수정: 세션 ID를 파라미터로 받아 사용자별 격리
+
+    Args:
+        api_base_url: FastAPI 서버 주소 (기본값: http://localhost:8000)
+    """
+    import json
+
+    import httpx
+
+    async def chat_with_lumi_sse(message: str, history: list, session_id: str):
+        """
+        SSE로 루미와 대화합니다. (HTTP 방식)
+
+        /chat/stream 엔드포인트를 호출하여 SSE 이벤트를 수신합니다.
+        실무에서 프론트/백엔드 분리 시 이 방식을 사용합니다.
+
+        Args:
+            message: 사용자 메시지
+            history: 대화 히스토리
+            session_id: 사용자별 고유 세션 ID (gr.State로 관리)
+
+        SSE 이벤트 타입:
+            - thinking: 노드 진행 상황 ("router", "tool", "response")
+            - token: LLM 토큰 (글자 단위)
+            - tool: Tool 실행 결과
+            - response: 최종 응답
+            - error: 에러 발생
+            - done: 스트리밍 종료
+        """
+        if not message.strip():
+            yield "메시지를 입력해주세요!"
+            return
+
+        try:
+            current_response = ""
+
+            # 🔑 핵심: httpx로 SSE 스트리밍 연결!
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                async with client.stream(
+                    "POST",
+                    f"{api_base_url}/api/v1/chat/stream",
+                    json={
+                        "message": message,
+                        "session_id": session_id,
+                    },
+                ) as response:
+                    # 🔑 SSE 이벤트를 한 줄씩 읽기
+                    async for line in response.aiter_lines():
+                        # SSE 형식: "data: {...}"
+                        if not line.startswith("data: "):
+                            continue
+
+                        # JSON 파싱
+                        try:
+                            event = json.loads(line[6:])  # "data: " 제거
+                        except json.JSONDecodeError:
+                            continue
+
+                        event_type = event.get("type")
+
+                        # 📍 thinking: 노드 진행 상황
+                        # content에 이미 "🔀 루미 생각 중..." 같은 메시지가 들어있음
+                        if event_type == "thinking":
+                            status_msg = event.get("content", "")
+                            if status_msg and not current_response:
+                                yield status_msg
+
+                        # 📍 token: LLM 토큰 스트리밍
+                        elif event_type == "token":
+                            token = event.get("content", "")
+                            if token:
+                                current_response += token
+                                yield sanitize_for_gradio_markdown(current_response)
+
+                        # 📍 tool: Tool 실행 결과
+                        elif event_type == "tool":
+                            tool_name = event.get("tool_name", "")
+                            if tool_name and not current_response:
+                                yield f"🔧 {tool_name} 실행 완료!"
+
+                        # 📍 response: 최종 응답
+                        elif event_type == "response":
+                            final_content = event.get("content", "")
+                            tool_used = event.get("tool_used")
+                            if tool_used:
+                                final_content += f"\n\n✨ _{tool_used}_"
+                            yield sanitize_for_gradio_markdown(final_content)
+
+                        # 📍 error: 에러
+                        elif event_type == "error":
+                            error_msg = event.get("error", "알 수 없는 오류")
+                            yield f"❌ 오류: {error_msg}"
+
+                        # 📍 done: 종료
+                        elif event_type == "done":
+                            break
+
+        except httpx.ConnectError as e:
+            logger.error(f"SSE 연결 실패: {e}")
+            yield f"❌ 서버 연결 실패: {api_base_url}\n\n💡 Direct Call 방식을 사용해보세요."
+        except Exception as e:
+            logger.error(f"SSE 오류: {e}")
+            yield f"앗, 오류가 발생했어요: {str(e)}"
+
+    return chat_with_lumi_sse
+
+
+# =============================================================
+# 🎛️ 스트리밍 방식 선택
+# =============================================================
+# 기본값: Direct Call (같은 프로세스, 네트워크 문제 없음)
+# 옵션: SSE (프론트/백엔드 분리 시)
+#
+# SSE 방식을 쓰려면:
+#   chat_with_lumi = create_chat_handler_sse("http://localhost:8000")
+# =============================================================
+
+
+def create_demo(api_base_url: str | None = None) -> gr.Blocks:
     """
     Gradio 데모 앱 생성
+
+    Args:
+        api_base_url: FastAPI 서버 URL (None일 경우 settings.port 사용)
 
     Returns:
         gr.Blocks: Gradio 앱
     """
+    from app.core.config import settings
+
+    # API URL이 없으면 settings의 host/port 사용
+    if not api_base_url:
+        host = "localhost" if settings.host == "0.0.0.0" else settings.host
+        api_base_url = f"http://{host}:{settings.port}"
+
+    # ===========================================
+    # 🎛️ 스트리밍 방식 선택 (둘 중 하나만 활성화!)
+    # ===========================================
+    #
+    # 방식 1: Direct Call (같은 프로세스일 때) - 기본값
+    #   - Gradio가 FastAPI와 같은 프로세스에서 실행될 때
+    #   - 네트워크 없이 함수 직접 호출 → 빠르고 간단!
+    #
+    # 방식 2: SSE (프론트/백엔드 분리 시)
+    #   - React, Vue, Next.js 등 별도 프론트엔드 사용 시
+    #   - HTTP로 /chat/stream 엔드포인트 호출
+    #   - 실무 표준 방식!
+    #
+    # ===========================================
+
+    # ✅ 방식 1: Direct Call (마운트 구조에서는 이것 사용!)
     chat_with_lumi = create_chat_handler()
+
+    # 🔄 방식 2: SSE (Gradio를 별도 프로세스로 실행할 때만!)
+    # chat_with_lumi = create_chat_handler_sse(api_base_url)
 
     # 🔧 세션 ID 생성 헬퍼 함수
     def generate_session_id() -> str:
@@ -502,12 +746,14 @@ def create_demo() -> gr.Blocks:
         return new_id
 
     with gr.Blocks(
-        title="✨ 루미 에이전트",
+        title="루미(LUMI) - 버추얼 아이돌 AI 에이전트",
+        head=META_TAGS,
+        analytics_enabled=False,
     ) as demo:
         # CSS 직접 삽입 (마운트 시에도 적용되도록)
         gr.HTML(f"<style>{CUSTOM_CSS}</style>")
 
-        # 🔧 gr.State로 사용자별 세션 ID 관리
+        # 🔧 수정: gr.State로 사용자별 세션 ID 관리
         # 페이지 로드 시 고유한 세션 ID가 생성되어 각 탭/사용자가 격리됨
         session_state = gr.State(generate_session_id)
 
@@ -550,7 +796,9 @@ def create_demo() -> gr.Blocks:
                 )
 
         # 빠른 응답 버튼
-        gr.HTML('<div style="text-align: center; margin-top: 1rem; color: rgba(255,255,255,0.6); font-size: 0.9rem;">💡 빠른 질문</div>')
+        gr.HTML(
+            '<div style="text-align: center; margin-top: 1rem; color: rgba(255,255,255,0.6); font-size: 0.9rem;">💡 빠른 질문</div>'
+        )
         with gr.Row(elem_classes="quick-buttons"):
             btn1 = gr.Button("👋 안녕!", elem_classes="quick-btn")
             btn2 = gr.Button("🔮 MBTI 뭐야?", elem_classes="quick-btn")
@@ -561,7 +809,7 @@ def create_demo() -> gr.Blocks:
         with gr.Row():
             clear_btn = gr.Button("🗑️ 대화 초기화", elem_classes="clear-btn")
 
-        # 이벤트 핸들러 - 2단계로 분리
+        # 스트리밍 이벤트 핸들러
         def add_user_message(message: str, chat_history: list) -> tuple:
             """1단계: 사용자 메시지 먼저 표시"""
             if not message.strip():
@@ -569,46 +817,64 @@ def create_demo() -> gr.Blocks:
             chat_history.append({"role": "user", "content": message})
             return "", chat_history
 
-        async def get_bot_response(chat_history: list, session_id: str) -> list:
+        async def get_bot_response_stream(chat_history: list, session_id: str):
             """
-            2단계: 봇 응답 생성
+            스트리밍 봇 응답 생성
 
-            Args:
-                chat_history: 대화 히스토리
-                session_id: 사용자별 고유 세션 ID (gr.State로 관리)
+            chat_with_lumi가 응답을 yield할 때마다 채팅창 업데이트.
+            - 먼저 "🔀 루미 생각 중..." 표시
+            - 토큰이 오면 응답으로 대체
+
+            🔧 수정: session_id를 파라미터로 받아 사용자별 격리
             """
             if not chat_history:
-                return chat_history
+                yield chat_history
+                return
 
             # 마지막 사용자 메시지 가져오기
             last_msg = chat_history[-1]
+
+            # 메시지 내용 추출 (다양한 형식 처리)
             if isinstance(last_msg, dict):
-                last_user_msg = last_msg.get("content", "")
+                content = last_msg.get("content", "")
+                # Gradio 멀티모달 형식: [{'text': '...', 'type': 'text'}]
+                if isinstance(content, list):
+                    for part in content:
+                        if isinstance(part, dict) and part.get("type") == "text":
+                            last_user_msg = part.get("text", "")
+                            break
+                    else:
+                        last_user_msg = str(content)
+                else:
+                    last_user_msg = str(content)
             else:
                 last_user_msg = str(last_msg)
 
             if not last_user_msg:
-                return chat_history
+                yield chat_history
+                return
 
-            # 🔧 session_id를 chat_with_lumi에 전달
-            bot_message = await chat_with_lumi(str(last_user_msg), chat_history, session_id)
-            chat_history.append({"role": "assistant", "content": bot_message})
-            return chat_history
+            # 스트리밍 응답 생성
+            chat_history.append({"role": "assistant", "content": ""})
 
-        # 전송 이벤트 - 체이닝
-        # 🔧 session_state 추가 및 concurrency_limit=None으로 병렬 처리 허용
-        msg.submit(
-            add_user_message, [msg, chatbot], [msg, chatbot]
-        ).then(
-            get_bot_response,
+            # 🔧 수정: session_id를 chat_with_lumi에 전달
+            async for partial_response in chat_with_lumi(
+                str(last_user_msg), chat_history, session_id
+            ):
+                # 마지막 assistant 메시지 업데이트
+                chat_history[-1] = {"role": "assistant", "content": partial_response}
+                yield chat_history
+
+        # 전송 이벤트 - 스트리밍 체이닝
+        # 🔧 수정: session_state 추가 및 concurrency_limit=None으로 병렬 처리 허용
+        msg.submit(add_user_message, [msg, chatbot], [msg, chatbot]).then(
+            get_bot_response_stream,
             [chatbot, session_state],
             [chatbot],
             concurrency_limit=None,  # 🔧 여러 요청 병렬 처리 허용
         )
-        submit_btn.click(
-            add_user_message, [msg, chatbot], [msg, chatbot]
-        ).then(
-            get_bot_response,
+        submit_btn.click(add_user_message, [msg, chatbot], [msg, chatbot]).then(
+            get_bot_response_stream,
             [chatbot, session_state],
             [chatbot],
             concurrency_limit=None,  # 🔧 여러 요청 병렬 처리 허용
@@ -620,7 +886,7 @@ def create_demo() -> gr.Blocks:
         btn3.click(lambda: "이번 주 방송 일정 알려줘", outputs=msg)
         btn4.click(lambda: "신나는 노래 추천해줘", outputs=msg)
 
-        # 🔧 클리어 시 새 세션 ID 생성 (대화 히스토리 초기화와 함께)
+        # 🔧 수정: 클리어 시 새 세션 ID 생성 (대화 히스토리 초기화와 함께)
         def clear_chat():
             """대화 초기화 및 새 세션 ID 생성"""
             new_session_id = generate_session_id()

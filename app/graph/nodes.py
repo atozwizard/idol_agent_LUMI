@@ -71,6 +71,50 @@ async def router_node(state: LumiState) -> dict:
 
     try:
         result = await structured_llm.ainvoke(messages)
+        # tool_name 정리
+        # LLm은 가끔 예상하지 못하는 형식으로 응답
+        # 따옴표 포함 -> get_schedule,
+        # 여러 도구 나열 : "get_schedule, recommend_song"
+        # 너무 긴 문자열 : aaabcasasdfasdhhk
+        # 방어 로직을 만들어서 안정적인 서비스를 제공
+        tool_name = result.tool_name
+        if tool_name:
+            # 비정상적으로 긴 tool_name 필터링.
+            if len(tool_name) > 50:
+                logger.warning(f"tool_name 이 너무 김. ({len(tool_name)}자, 무시)")
+                tool_name = None
+            else:
+                # 따옴표를 제거 -> 유니코드 따옴표
+                tool_name = tool_name.strip()
+                quote_chars = "'\"`'''\"\"「」『』"
+                tool_name = tool_name.strip(quote_chars)
+                for char in quote_chars:
+                    tool_name = tool_name.replace(char,"")
+                    
+                #쉼표로 나열된 경우 첫번째만 사용
+                if "," in tool_name:
+                    tool_name = tool_name.split(",")[0].strip()
+                # tool1?tool2?tool3
+                if "?" in tool_name:
+                    tool_name = tool_name.split("?")[0].strip()
+                
+        # 유효한 tool 이름만 나오는지 화이트리스트
+        vaild_tools = ["get_schedule", "send_fan_letter", "recommend_song", "get_weather"]    
+        
+        result_intent = result.intent
+        
+        if result_intent == "tool":
+            if not tool_name:
+                logger.warning("intent=tool 인데 tool_name이 없음, chat 으로 전환")
+                result_intent = "chat"
+            elif tool_name not in vaild_tools:
+                logger.warning(f"유효하지 않은 tool: {tool_name}, chat으로 전환")
+                tool_name = None
+                result_intent = "chat"
+                
+                
+                
+                            
         logger.debug(
             f"LLM 응답 (structured) : intent={result.intent},"
             f" tool_name={result.tool_name}, tool_args={result.tool_name}")
@@ -114,7 +158,7 @@ async def rag_node(state: LumiState) -> dict:
             filter_status="active"
         )
         # 검색결과에서 content만 추출
-        retrieved_docs = [["content"] for doc in docs]
+        retrieved_docs = ["content" for doc in docs]
         
         # 검색 결과 로깅 (디버깅용)
         for i, doc in enumerate(docs):
@@ -201,8 +245,9 @@ async def response_node(state: LumiState) -> dict:
             - messages: AI 응답 메시지 추가
     """
     logger.info(f"💬 [Response] 응답 생성 시작 (intent: {state['intent']})")
-    
+    # print(state,"="*50)
     llm = get_llm()
+    
     user_input = state["messages"][-1].content
     
     intent = state["intent"]
