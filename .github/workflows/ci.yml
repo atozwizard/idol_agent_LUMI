@@ -17,6 +17,25 @@ name: Lumi Agent CI
 
 # TODO 1: 트리거 이벤트 설정. main 브랜치에 push되거나 PR이 생성될 때 실행
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '.github/workflows/**'
+      - '!**/*.md'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '.github/workflows/**'
+      - '!**/*.md'
+  workflow_dispatch:
   # 여기에 작성하세요!
 
 concurrency:
@@ -32,13 +51,48 @@ jobs:
     name: Code Quality
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{env.PYTHON_VERSION}}
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Run Ruff (lint)
+        run : uv run ruff check app/ tests/ --output-format=github
+
+      - name: Run Ruff (format)
+        run: uv run ruff format app/ tests/ --check
       # 여기에 작성하세요!
 
   # TODO 3: test job 작성
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
-    # 여기에 작성하세요!
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{env.PYTHON_VERSION}}
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Run tests
+        env:
+          UPSTAGE_API_KEY: ${{ secrets.UPSTAGE_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run : uv run pytest tests/ -v --tb=short
+        # 여기에 작성하세요!
 
 
   # Job 3: Comment (PR 코멘트)
