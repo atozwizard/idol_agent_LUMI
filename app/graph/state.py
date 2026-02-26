@@ -10,9 +10,9 @@ TypedDict를 사용하여 타입 안전하게 정의합니다.
     - Annotated[list, add_messages]를 사용하면 메시지가 자동으로 추가됨
 """
 
+from typing import Annotated, Literal, TypedDict
 
-from typing import TypedDict, Literal, Annotated
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 
 
@@ -44,7 +44,7 @@ class LumiState(TypedDict):
         ...     "tool_result": None,
         ... }
     """
-    
+
     messages: Annotated[list[BaseMessage], add_messages]
 
     # Router 노드에서 결정된 의도
@@ -68,10 +68,10 @@ class LumiState(TypedDict):
 def create_initial_state(
     session_id: str,
     user_id: str | None = None,
-    messages: list[BaseMessage] | None = None
-    ) -> LumiState:
+    messages: list[BaseMessage] | None = None,
+) -> LumiState:
     """초기 상태 생성 함수"""
-    
+
     return LumiState(
         messages=messages or [],
         intent=None,
@@ -80,5 +80,5 @@ def create_initial_state(
         tool_args=None,
         tool_result=None,
         session_id=session_id,
-        user_id=user_id
+        user_id=user_id,
     )

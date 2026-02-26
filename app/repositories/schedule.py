@@ -13,12 +13,9 @@ supabase에서 루미의 스케줄 데이터를 조회하는 기능을 담당하
     - created_at: TIMESTAMP
 """
 
-from typing import Optional
 from loguru import logger
 
 from app.repositories import get_supabase_client
-
-
 
 
 class ScheduleRepository:
@@ -39,14 +36,16 @@ class ScheduleRepository:
         """ScheduleRepository 초기화"""
         self.client = get_supabase_client()
         if not self.client:
-            raise ValueError("Supabase 클라이언트가 설정되지 않았습니다. .env 파일을 확인하세요.")
+            raise ValueError(
+                "Supabase 클라이언트가 설정되지 않았습니다. .env 파일을 확인하세요."
+            )
         logger.info("supabase 연결됨")
 
     async def get_schedules(
         self,
         start_date: str,
         end_date: str,
-        event_type: Optional[str] = None,
+        event_type: str | None = None,
     ) -> list[dict]:
         """
         스케줄 목록을 조회합니다.
@@ -67,7 +66,7 @@ class ScheduleRepository:
             # lte: less than or equal (이하) 작거나 같음(<=)
             # eq: equal (같음) 특정 값과 일치하는 행 필터링 (=)
             # order: 정렬 기준 (start_time 컬럼 기준 오름차순)
-            
+
             query = self.client.table("schedules").select("*")
 
             # 날짜 필터 (start_time 컬럼 사용)

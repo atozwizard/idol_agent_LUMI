@@ -7,6 +7,7 @@ chat.py : 채팅 api
 # 코드가 많아지면 하나의 파일에 모든 api를 넣을 수 없어서, 도메인별로 파일을 나누고, 각 파일에 라우터를 연결
 
 from fastapi import APIRouter
+
 from app.api.routes import chat
 
 api_router = APIRouter()

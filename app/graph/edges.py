@@ -6,10 +6,11 @@
     - route_by_intent: Router 노드 이후 의도에 따른 분기
 """
 
-
 # Edge: intent에 따라 다음 노드 결정
 from typing import Literal
+
 from loguru import logger
+
 from app.graph.state import LumiState
 
 
@@ -38,10 +39,9 @@ def route_by_intent(state: LumiState) -> Literal["rag", "tool", "response"]:
         'tool'
     """
     intent = state.get("intent", "chat")
-    
+
     logger.debug(f"🔀 [Edge] 라우팅 결정: intent={intent}")
-    
-    
+
     if intent == "rag":
         return "rag"
     elif intent == "tool":

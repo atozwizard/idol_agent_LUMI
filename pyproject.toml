@@ -1,12 +1,20 @@
+# 🆕 4강: CI/CD 파이프라인
 # uv 패키지 관리자를 사용하는 프로젝트 설정 파일
 #
 # 사용법:
 #   uv sync          # 의존성 설치
 #   uv run uvicorn app.main:app --reload  # 서버 실행
+#   uv run pytest tests/ -v               # 테스트 실행
+#
+# 🆕 4강 변경사항:
+#   - pytest 마커 설정 추가
+#   - ruff 설정 강화
+#   - pre-commit 훅 도입
+#   - GitHub Actions에서 사용
 
 [project]
 name = "lumi-agent"
-version = "0.3.0"  
+version = "0.4.0"
 description = "루미(Lumi) - 버추얼 아이돌 AI 에이전트 서비스"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -40,19 +48,25 @@ dependencies = [
     "loguru>=0.7.0",                     # 로깅 라이브러리
     "orjson>=3.10.0",                    # 빠른 JSON 처리
 
+    # Gradio UI
     "gradio>=5.0.0",                     # 웹 UI 프레임워크
+
+    # SSE 스트리밍
     "sse-starlette>=2.1.0",              # Server-Sent Events 지원
 ]
 
 [project.optional-dependencies]
-# 개발용 의존성
+# 개발/테스트용 의존성 강화
 dev = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.24.0",
-    "black>=24.0.0",
-    "ruff>=0.8.0",
-    "mypy>=1.0.0",
+    "pytest>=8.0.0",                     # 테스트 프레임워크
+    "pytest-asyncio>=0.24.0",            # 비동기 테스트 지원
+    "pytest-cov>=4.0.0",                 # 커버리지 리포트
+    "black>=24.0.0",                     # 코드 포매터
+    "ruff>=0.8.0",                       # 린터 (flake8 대체)
+    "mypy>=1.0.0",                       # 타입 체커
+    "pre-commit>=4.0.0",                 # Git 훅 관리
 ]
+
 
 [build-system]
 requires = ["hatchling"]
@@ -61,14 +75,71 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
 
+# =============================================================
+# Pytest 설정
+# =============================================================
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# 테스트 마커 정의
+markers = [
+    "slow: 느린 테스트 (LLM API 호출)",
+    "integration: 통합 테스트",
+]
+# 기본 옵션
+addopts = [
+    "-v",
+    "--tb=short",
+]
+# 통합 테스트 제외 (기본)
+# 통합 테스트 실행: uv run pytest -m integration
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
 
+# =============================================================
+# Ruff 설정 (린터)
+# =============================================================
 [tool.ruff]
 line-length = 88
 target-version = "py311"
 
+[tool.ruff.lint]
+# 활성화할 규칙
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+]
+# 무시할 규칙
+ignore = [
+    "E501",   # line too long (black이 처리)
+    "B008",   # function call in default argument (FastAPI Depends)
+    "B904",   # raise without from (의도적인 경우)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B", "C4"]  # 테스트 파일은 일부 규칙 완화
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+# =============================================================
+# Black 설정 (포매터)
+# =============================================================
 [tool.black]
 line-length = 88
 target-version = ["py311"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | __pycache__
+  | \.mypy_cache
+)/
+'''
