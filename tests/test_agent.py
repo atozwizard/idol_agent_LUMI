@@ -145,14 +145,14 @@ class TestToolExecutor:
         """날씨 조회 테스트"""
         result = await executor.execute(
             tool_name="get_weather",
-            tool_args={},
+            tool_args={"lat": 37.5665, "lon": 126.9780},
             session_id="test-session",
         )
 
         assert result["success"] is True
         assert "data" in result
-        assert "temperature" in result["data"]
-        assert result.get("mock") is True
+        assert "temp" in result["data"]
+        assert result.get("mock") is False
 
     @pytest.mark.asyncio
     async def test_unknown_tool(self, executor):

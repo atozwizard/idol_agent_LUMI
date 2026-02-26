@@ -164,8 +164,11 @@ class ToolExecutor:
 
         return {
             "success": True,
-            "data": {"song": selected["title"], "album": selected["album"]},
-            "mood": mood,
+            "data": {
+                "mood": mood,
+                "song": selected["title"],
+                "album": selected["album"],
+            },
             "mock": True,
         }
 
