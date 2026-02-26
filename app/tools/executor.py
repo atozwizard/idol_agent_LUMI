@@ -47,14 +47,14 @@ LUMI_SONGS = {
     ],
 }
 
-# 🔶 Mock 데이터: 날씨 정보
-MOCK_WEATHER = {
-    "location": "서울",
-    "temperature": 5,
-    "condition": "맑음",
-    "humidity": 45,
-    "wind_speed": 3.2,
-}
+# # 🔶 Mock 데이터: 날씨 정보
+# MOCK_WEATHER = {
+#     "location": "서울",
+#     "temperature": 5,
+#     "condition": "맑음",
+#     "humidity": 45,
+#     "wind_speed": 3.2,
+# }
 
 
 class ToolExecutor:
@@ -130,7 +130,7 @@ class ToolExecutor:
             "data": {"schedule": schedules, "count": len(schedules)},
         }
 
-    async def send_fan_letter(
+    async def _send_fan_letter(
         self, args: dict, session_id: str, user_id: str | None
     ) -> dict:
         """supabase에 팬레터 저장"""
@@ -164,7 +164,9 @@ class ToolExecutor:
 
         return {
             "success": True,
-            "data": {"title": selected["title"], "album": selected["album"]},
+            "data": {"song": selected["title"], "album": selected["album"]},
+            "mood": mood,
+            "mock": True,
         }
 
     #     async def _get_weather(self, args:dict) -> dict:
@@ -199,7 +201,7 @@ class ToolExecutor:
         api_key = settings.openweathermap_api_key
 
         if not api_key:
-            logger.error("OpenWeatherMap API Key가 설정되지 않았습니다.")
+            logger.error("openweathermap api key가 설정되지 않았습니다.")
             return {"success": False, "message": "API Key missing"}
 
         # 요청 URL 구성 (f-string 방식)
