@@ -1,5 +1,8 @@
 """
 채팅 api 요청 /응답 스키마
+
+    - StreamEvent: SSE 스트리밍 이벤트 스키마
+    - StreamEventType: 이벤트 타입 (thinking, tool, token, done)
 """
 
 from dataclasses import Field

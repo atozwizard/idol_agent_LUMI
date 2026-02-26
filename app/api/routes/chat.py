@@ -3,6 +3,7 @@ langgraph에이전트를 호출하여 사용자 메시지를 처리
 
 엔드포인트:
     POST /chat/          - 채팅 메시지 전송
+    POST /chat/stream        - SSE 스트리밍
 """
 
 from typing import AsyncGenerator
@@ -17,7 +18,7 @@ from app.schemas.chat import ChatRequest, ChatResponse, StreamEvent
 from app.graph import get_lumi_graph
 
 
-router = APIRouter()
+router = APIRouter() 
 
 # In_memory 세션 저장소
 # 서버 메모리에 세션별 대화 히스토리를 저장
