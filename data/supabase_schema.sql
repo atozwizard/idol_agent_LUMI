@@ -57,7 +57,7 @@ AS $$
     LIMIT match_count;
 $$;
 
--- 문서 통계 함수 
+-- 문서 통계 함수
 CREATE OR REPLACE FUNCTION get_document_stats()
 RETURNS TABLE(
     status TEXT,
@@ -73,4 +73,4 @@ AS $$
 $$;
 
 -- 데이터 잘 들어갔나 확인하는 쿼리
--- SELECT * FROM documents LIMIT 5;
+SELECT * FROM documents LIMIT 20;
