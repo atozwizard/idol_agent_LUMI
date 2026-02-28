@@ -138,11 +138,11 @@ async def embed_chunks(chunks: list[str]) -> list[list[float]]:
 
     from app.core.config import settings
 
-    if not settings.upstage_api_key:
+    if not settings.UPSTAGE_API_KEY:
         raise ValueError("UPSTAGE_API_KEY가 설정되지 않았습니다.")
 
     embeddings = UpstageEmbeddings(
-        api_key=settings.upstage_api_key,
+        api_key=settings.UPSTAGE_API_KEY,
         model="solar-embedding-1-large-passage",  # 4096차원
     )
 

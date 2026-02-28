@@ -201,7 +201,7 @@ class ToolExecutor:
         # args에서 좌표를 가져오고, 없으면 기본값(서울) 사용
         lat = args.get("lat", 37.5665)
         lon = args.get("lon", 126.9780)
-        api_key = settings.openweathermap_api_key
+        api_key = settings.OPENWEATHERMAP_API_KEY
 
         if not api_key:
             logger.error("openweathermap api key가 설정되지 않았습니다.")

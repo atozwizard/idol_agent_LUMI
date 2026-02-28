@@ -91,7 +91,7 @@ jobs:
           UPSTAGE_API_KEY: ${{ secrets.UPSTAGE_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          openweathermap_api_key: ${{ secrets.openweathermap_api_key}}
+          OPENWEATHERMAP_API_KEY: ${{ secrets.OPENWEATHERMAP_API_KEY}}
         run : uv run pytest tests/ -v --tb=short
         # 여기에 작성하세요!
 
