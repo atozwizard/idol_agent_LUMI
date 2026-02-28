@@ -167,10 +167,10 @@ async def truncate_documents() -> int:
 
     from app.core.config import settings
 
-    if not settings.supabase_url or not settings.supabase_key:
+    if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
         raise ValueError("Supabase 설정이 완료되지 않았습니다.")
 
-    client = create_client(settings.supabase_url, settings.supabase_key)
+    client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
 
     # 기존 데이터 수 확인
     existing = client.table("documents").select("id", count="exact").execute()
@@ -204,10 +204,10 @@ async def save_to_supabase(
 
     from app.core.config import settings
 
-    if not settings.supabase_url or not settings.supabase_key:
+    if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
         raise ValueError("Supabase 설정이 완료되지 않았습니다.")
 
-    client = create_client(settings.supabase_url, settings.supabase_key)
+    client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
 
     logger.info("Supabase에 저장 시작...")
 

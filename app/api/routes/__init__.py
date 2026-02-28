@@ -1,6 +1,9 @@
 """
 HTTP 엔드포인트 정의
 chat.py : 채팅 api
+
+각 라우터는 특정 도메인의 API를 담당합니다:
+    - chat.py: 채팅 API
 """
 
 # fastapi라우터는 url경로를 정리하는 폴더 구조라고 보면 됨
@@ -8,7 +11,8 @@ chat.py : 채팅 api
 
 from fastapi import APIRouter
 
-from app.api.routes import chat
+from app.api.routes import chat, health
 
 api_router = APIRouter()
 api_router.include_router(chat.router, prefix="/chat", tags=["Chat"])
+api_router.include_router(health.router, prefix="/health", tags=["Health"])

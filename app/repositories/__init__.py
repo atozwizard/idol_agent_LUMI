@@ -14,12 +14,12 @@ def get_supabase_client():
 
     init.py 에 있는 이유 -> schedule.py에서 사용하고, fan_letter.py에서도 사용->반복되서 사용"""
     global _supabase_client
-    if _supabase_client is None and settings.supabase_url and settings.supabase_key:
+    if _supabase_client is None and settings.SUPABASE_URL and settings.SUPABASE_KEY:
         try:
             from supabase import create_client
 
             _supabase_client = create_client(
-                settings.supabase_url, settings.supabase_key
+                settings.SUPABASE_URL, settings.SUPABASE_KEY
             )
             logger.info("Supabase 클라이언트 초기화 성공")
         except Exception as e:

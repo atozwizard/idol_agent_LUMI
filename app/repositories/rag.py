@@ -47,7 +47,7 @@ class RAGRepository:
         )
 
         self.supabase: Client = create_client(
-            settings.supabase_url, settings.supabase_key
+            settings.SUPABASE_URL, settings.SUPABASE_KEY
         )
 
         logger.info("RAGRepository 초기화 완료 (필터링 지원)")

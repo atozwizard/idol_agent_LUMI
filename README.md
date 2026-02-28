@@ -1,10 +1,33 @@
 # AI Backend Engineering(Service Deployment, LLMOps) Starter Code
 
 ## 환경 설정
-```
+
+```bash
+# 의존성 설치
 uv sync
+
+# 환경변수 설정
+cp .env.example .env
 ```
 
+## 실행
+
+```bash
+# Docker 이미지 빌드
+docker build -t lumi-agent .
+
+# Docker Compose로 실행
+docker-compose up --build
+
+# 백그라운드 실행
+docker-compose up -d
+
+# 로그 확인
+docker-compose logs -f
+
+# 종료
+docker-compose down
+```
 ## 코드 강의
 - 바닥부터 구현하는 과정을 보여줄 예정
     - 단, 일부 코드는 구현된 것을 가져와서 사용
@@ -89,7 +112,18 @@ uv sync
 
 uv run uvicorn app.main:app --reload --reload-dir app --port 8000
 
+# service deploy 5강
+## 오늘 할 일
+- docker에 대한 이해(기본 명령어)
+- dockerfile, docker-compose.yml
+- api/routes/health.py
 
+## docker 사용 흐름
+-1) docker image를 가져다가 바로 쓴다 -> docker image가 저장된 registry에서 검색 후 활용
+    - docker hub, github registry
+-2) 특정 도커 이미지를 ㅋ기반으로 나만의 이미지를 만들어서 활용 -> docker images 보이도록 docker image build
+    - 컨테이너를 실행할 때는 docker run
+-3) docker compose 사용해서 캠핑 풀세트를 만들어서 활용
 
 ### 프로젝트 구조
 

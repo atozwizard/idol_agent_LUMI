@@ -39,8 +39,11 @@ class Settings(BaseSettings):
     upstage_api_key: str = ""
     llm_model: str = "solar-pro2"
 
-    supabase_url: str = ""
-    supabase_key: str = ""
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
+
+    # SUPABASE_URL: str
+    # SUPABASE_KEY: str
 
     host: str = "0.0.0.0"
     port: int = 8000
