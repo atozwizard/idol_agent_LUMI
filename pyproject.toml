@@ -1,6 +1,19 @@
+# 5강: Production 배포
+# uv 패키지 관리자를 사용하는 프로젝트 설정 파일
+#
+# 사용법:
+#   uv sync          # 의존성 설치
+#   uv run uvicorn app.main:app --reload  # 서버 실행
+#   docker-compose up --build             # Docker로 실행
+#   uv run pytest tests/ -v               # 테스트 실행
+#
+# 5강 변경사항:
+#   - Docker 빌드에서 사용
+#   - Production 환경 최적화
+
 [project]
 name = "lumi-agent"
-version = "0.1.0"
+version = "0.5.0"
 description = "루미(Lumi) - 버추얼 아이돌 AI 에이전트 서비스"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -60,9 +73,13 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
 
+# =============================================================
+# Pytest 설정
+# =============================================================
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# 테스트 마커 정의
 markers = [
     "slow: 느린 테스트 (LLM API 호출)",
     "integration: 통합 테스트",
@@ -78,6 +95,9 @@ filterwarnings = [
     "ignore::DeprecationWarning",
 ]
 
+# =============================================================
+# Ruff 설정 (린터)
+# =============================================================
 [tool.ruff]
 line-length = 88
 target-version = "py311"
@@ -106,6 +126,9 @@ ignore = [
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
 
+# =============================================================
+# Black 설정 (포매터)
+# =============================================================
 [tool.black]
 line-length = 88
 target-version = ["py311"]
@@ -118,17 +141,3 @@ exclude = '''
   | \.mypy_cache
 )/
 '''
-
-[tool.coverage.run]
-source = ["app"]
-omit = [
-    "*/tests/*",
-    "*/__init__.py",
-]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "if TYPE_CHECKING:",
-    "raise NotImplementedError",
-]

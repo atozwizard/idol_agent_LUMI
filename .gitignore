@@ -70,3 +70,9 @@ data/*.csv
 
 # uv lock 파일은 포함 (재현 가능한 빌드를 위해)
 # uv.lock
+
+
+
+
+# pem
+yyk-twentyflags.pem
