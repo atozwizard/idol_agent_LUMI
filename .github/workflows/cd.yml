@@ -32,12 +32,18 @@ on:
   # 여기에 구현하세요!
   push:
     branches: [main]
+    # paths:
+    #   - 'idol_agent_LUMI/app/**'
+    #   - 'idol_agent_LUMI/docker-compose.yml'
+    #   - 'idol_agent_LUMI/Dockerfile'
+    #   - 'idol_agent_LUMI/pyproject.toml'
+    #   - 'idol_agent_LUMI/uv.lock'
     paths:
-      - 'idol_agent_LUMI/app/**'
-      - 'idol_agent_LUMI/docker-compose.yml'
-      - 'idol_agent_LUMI/Dockerfile'
-      - 'idol_agent_LUMI/pyproject.toml'
-      - 'idol_agent_LUMI/uv.lock'
+      - 'app/**'
+      - 'docker-compose.yml'
+      - 'Dockerfile'
+      - 'pyproject.toml'
+      - 'uv.lock'
   # 수동 실행 허용 (긴급 배포/롤백용)
   workflow_dispatch:
     inputs:
