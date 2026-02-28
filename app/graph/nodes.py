@@ -277,7 +277,7 @@ tool_name : {tool_name}, tool_result :{json.dumps(tool_result, ensure_ascii=Fals
     # 대화 히스토리를 LLM에 전달하여 과거 질문 기억
     # 최근 6개 메시지 (3턴: user+ai 쌍)를 히스토리로 포함
     # 마지막 메시지(현재 질문)는 별도로 추가하므로 제외
-    history_messages = state["messages"][:-1][-6] if len(state["messages"]) > 1 else []
+    history_messages = state["messages"][:-1][-6:] if len(state["messages"]) > 1 else []
 
     # 히스토리를 텍스트로 변환
     history_text = ""
