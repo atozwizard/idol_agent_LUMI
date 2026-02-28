@@ -72,9 +72,9 @@ jobs:
       image_tag: ${{ steps.meta.outputs.tags }}
       image_digest: ${{ steps.build.outputs.digest }}
 
-    defaults:
-      run:
-        working-directory: idol_agent_LUMI
+    # defaults:
+    #   run:
+    #     working-directory: idol_agent_LUMI
 
     steps:
       - name: Checkout code
