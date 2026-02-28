@@ -7,7 +7,7 @@ Pruduction에서는 환경변수를 통해 설정을 주입받는다.
 사용법:
     from app.core import settings
 
-    api_key = settings.upstage_api_key
+    api_key = settings.UPSTAGE_API_KEY
 
 """
 
@@ -36,16 +36,19 @@ class Settings(BaseSettings):
 
     debug: bool = True
 
-    upstage_api_key: str = ""
+    UPSTAGE_API_KEY: str = ""
     llm_model: str = "solar-pro2"
 
-    supabase_url: str = ""
-    supabase_key: str = ""
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
+
+    # SUPABASE_URL: str
+    # SUPABASE_KEY: str
 
     host: str = "0.0.0.0"
     port: int = 8000
 
-    openweathermap_api_key: str = ""
+    OPENWEATHERMAP_API_KEY: str = ""
     city_name: str = "서울"
 
     model_config = SettingsConfigDict(

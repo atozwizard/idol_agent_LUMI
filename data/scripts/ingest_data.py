@@ -81,10 +81,10 @@ async def create_supabase_client():
 
     from app.core.config import settings
 
-    if not settings.supabase_url or not settings.supabase_key:
+    if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
         raise ValueError("Supabase 설정이 완료되지 않았습니다. .env 파일을 확인하세요.")
 
-    client: Client = create_client(settings.supabase_url, settings.supabase_key)
+    client: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
     return client
 
 
