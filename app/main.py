@@ -73,7 +73,7 @@ def _validate_settings():
     """
     필수 설정값 검증
     """
-    if not settings.upstage_api_key:
+    if not settings.UPSTAGE_API_KEY:
         logger.warning(
             "Upstage API Key가 설정되지 않았습니다. LLM 기능을 사용할 수 없습니다."
         )

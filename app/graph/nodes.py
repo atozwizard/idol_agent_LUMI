@@ -50,7 +50,7 @@ class RouterOutput(BaseModel):
 def get_llm() -> ChatUpstage:
     """upstage solar LLM 클라이언트를 반환"""
     return ChatUpstage(
-        api_key=settings.upstage_api_key,
+        api_key=settings.UPSTAGE_API_KEY,
         model=settings.llm_model,
         timeout=30,
         max_retries=2,

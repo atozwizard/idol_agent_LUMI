@@ -27,13 +27,14 @@ services:
   # 메인 에이전트 서비스
   # =============================================================
   lumi-agent:
-    # TODO 1: 이미지 및 빌드 설정
+    # TODO 1: 이미지 및 빌드 설정, 사용할 docker 이미지 이름, LUMI_IMAGE 환경변수가 있으면 그걸 쓰고,
+    # 없으면 -lumi-agent:latest를 쓴다
     image: ${LIMI_IMAGE:-lumi-agent:latest}
     build:
       context: .
       dockerfile: Dockerfile
     container_name: lumi-agent
-    # TODO 2: 포트 매핑 (호스트:컨테이너)
+    # TODO 2: 포트 매핑 (호스트포트:컨테이너포트)
     ports:
       - "8000:8000"
 
@@ -45,7 +46,7 @@ services:
       - UPSTAGE_API_KEY=${UPSTAGE_API_KEY}
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
-      - openweathermap_api_key=${openweathermap_api_key}
+      - OPENWEATHERMAP_API_KEY=${OPENWEATHERMAP_API_KEY}
       - DEBUG=false
       # 개발환경에서는 DEBUG=true로 설정
       # 프로덕션 환경에서는 DEBUG=false로 설정
@@ -53,11 +54,15 @@ services:
     # TODO 4: 헬스체크 및 재시작 정책 설정
     # dockerfile에 정의된 것 사용
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 5s
     # 컨테이너 재시작 정책
     # 비정상 종료 시 자동 재시작
+      # no :재시작 안 함
+      # always : 항상 재시작
+      # on-failure : 실패 시 재시작
+      # unless-stopped : 멈추지 않는 한 재시작
     restart: unless-stopped

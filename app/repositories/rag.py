@@ -43,7 +43,7 @@ class RAGRepository:
         RAGRepository 초기화
         """
         self.embeddings = UpstageEmbeddings(
-            api_key=settings.upstage_api_key, model="solar-embedding-1-large-passage"
+            api_key=settings.UPSTAGE_API_KEY, model="solar-embedding-1-large-passage"
         )
 
         self.supabase: Client = create_client(
