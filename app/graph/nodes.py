@@ -12,6 +12,9 @@ LangGraph 그래프의 노드(Node) 정의
     4. response_node: 최종 응답 생성
 """
 
+
+
+import asyncio
 import json
 from datetime import datetime
 from typing import Literal
@@ -21,13 +24,15 @@ from langchain_upstage import ChatUpstage
 from loguru import logger
 from pydantic import BaseModel, Field
 
+from app.core.llm import get_router_llm
+# from app.core.config import get_llm
 from app.core.config import settings
 from app.core.prompts import RAG_RESPONSE_PROMPT, RESPONSE_PROMPT, ROUTER_PROMPT
 from app.graph.state import LumiState
 from app.repositories.rag import get_rag_repository
 from app.tools.executor import ToolExecutor
 
-
+TOOL_EXECUTION_TIMEOUT = 10
 class RouterOutput(BaseModel):
     """
     라우터 노드의 출력 스키마
@@ -47,14 +52,14 @@ class RouterOutput(BaseModel):
     )
 
 
-def get_llm() -> ChatUpstage:
-    """upstage solar LLM 클라이언트를 반환"""
-    return ChatUpstage(
-        api_key=settings.UPSTAGE_API_KEY,
-        model=settings.llm_model,
-        timeout=30,
-        max_retries=2,
-    )
+# def get_llm() -> ChatUpstage:
+#     """upstage solar LLM 클라이언트를 반환"""
+#     return ChatUpstage(
+#         api_key=settings.UPSTAGE_API_KEY,
+#         model=settings.llm_model,
+#         timeout=30,
+#         max_retries=2,
+#     )
 
 
 tool_executor = ToolExecutor()
@@ -66,7 +71,9 @@ async def router_node(state: LumiState) -> dict:
     last_message = state["messages"][-1]
     user_input = last_message.content
 
-    llm = get_llm()
+    llm = get_router_llm()
+    # get_llm -> solar-pro2. 사용자 의도 분류 task -> routernode. 성능이 엄청 좋은 모델을 사용할 필요가 없음
+    # 조금 성능이 떨어져도 빠르고 저렴한 모델을 사용
     structured_llm = llm.with_structured_output(RouterOutput)
     current_date = datetime.now().strftime("%Y-%m-%d")
 
@@ -192,6 +199,8 @@ async def tool_node(state: LumiState) -> dict:
     """
     Tool 노드 : tool 실행.
     LLM이 외부 시스템과 상호작용할 수 있게 해주는 기능
+    
+    llmops 1강 : 타임아웃 및 에러 핸들링 추가
     """
     tool_name = state["tool_name"]
     tool_args = state["tool_args"] or {}
@@ -210,18 +219,41 @@ async def tool_node(state: LumiState) -> dict:
 
     # 실제로는 DB 조회, API 호출 등을 해야 함
     # Tool 실행을 전담하는 Tool Executor 클래스를 만들어서 분리하자!
+    try:
+        # asyncio.wait_for : 비동기 작업에 타임아웃을 설정하는 방법
+        # timeout 초과시 asyncio.TimeoutError 발생
+        # 이를 통해 외구 api 호출이 무한 대기하는 것을 방지
+        result = await asyncio.wait_for(
+            tool_executor.execute(
+                tool_name=tool_name,
+                tool_args=tool_args,
+                session_id=state["session_id"],
+                user_id=state.get("user_id"),
+            ),
+            timeout=TOOL_EXECUTION_TIMEOUT,
+        )
 
-    result = await tool_executor.execute(
-        tool_name=tool_name,
-        tool_args=tool_args,
-        session_id=state["session_id"],
-        user_id=state.get("user_id"),
-    )
+        logger.info(f"[Tool] 실행 결과: {result}")
 
-    logger.info(f"[Tool] 실행 결과: {result}")
-
-    return {"tool_result": result}
-
+        return {"tool_result": result}
+    except TimeoutError:
+        logger.warning(
+            f"[Tool] 타임아웃: {tool_name} 실행 시간이 {TOOL_EXECUTION_TIMEOUT}초 초과"
+        )
+        return {
+            "tool_result": {"success": False,
+                            "error": "timeout",
+                            "message": "잠시 기다려줘! 정보를 가져오는데 시간이 좀 걸리고 있어..나중에 다시 물어봐줄래?"
+                            }
+        }
+    except Exception as e:
+        logger.error(f"[Tool] 실행 실패: {tool_name} - {e}")
+        return {
+            "tool_result": {"success": False,
+                            "error": str(e),
+                            "message": f"앗, '{tool_name}' 기능에 문제가 생겼어! 나중에 다시 시도해줄래?"
+                            }
+        }
 
 async def response_node(state: LumiState) -> dict:
     """최종 응답 생성
@@ -245,7 +277,7 @@ async def response_node(state: LumiState) -> dict:
     """
     logger.info(f"💬 [Response] 응답 생성 시작 (intent: {state['intent']})")
     # print(state,"="*50)
-    llm = get_llm()
+    llm = get_router_llm()
 
     user_input = state["messages"][-1].content
 
@@ -258,7 +290,15 @@ async def response_node(state: LumiState) -> dict:
     elif intent == "tool":
         tool_result = state["tool_result"]
         tool_name = state["tool_name"]
-
+        
+        # tool 에러시 조기 반환
+        # tool 실패 -> llm을 호출하지 않고 바로 에러메시지 반환
+        # llm api 비용 절약, 빠른 응답
+        # 일관된 에러메시지
+        if tool_result.get("success") is False:
+            error_message =  tool_result.get("message", "문제가 생겼어! 나중에 다시 시도해줄래?")
+            logger.info(f"🚨 [response] tool error -> 바로 반환: {error_message}")
+            return {"messages": [AIMessage(content=error_message)]} 
         result_context = f"""
 ## 📋 조회 결과 (내부 참고용, 절대 그대로 출력하지 마!)
 tool_name : {tool_name}, tool_result :{json.dumps(tool_result, ensure_ascii=False, indent=2)}
