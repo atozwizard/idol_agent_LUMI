@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     debug: bool = True
 
     UPSTAGE_API_KEY: str = ""
-    llm_model: str = "solar-pro22"
+    llm_model: str = "solar-pro"
 
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
@@ -51,14 +51,14 @@ class Settings(BaseSettings):
     OPENWEATHERMAP_API_KEY: str = ""
     city_name: str = "서울"
 
-    use_litellm:bool = False
-    litellm_num_retries:int = 3
-    GEMINI_API_KEY:str =""
-    litellm_fallback_model:str = "gemini/gemini-2.5-flash"
-    
-    litellm_timeout:int = 10
-    
-    router_llm_model:str ="solar-mini2"
+    use_litellm: bool = False
+    litellm_num_retries: int = 3
+    GEMINI_API_KEY: str = ""
+    litellm_fallback_model: str = "gemini/gemini-2.5-flash"
+
+    litellm_timeout: int = 10
+
+    router_llm_model: str = "solar-mini"
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
