@@ -148,6 +148,29 @@ uv run uvicorn app.main:app --reload --reload-dir app --port 8000
     - 캐시 : dict
 
 
+# llmops 2강
+## 오늘 할 일
+- 상태관리와 비용 최적화
+- checkpointer.py
+- token_counter.py
+- cost_tracker.py
+- nodes.py : 메시지 트리밍
+
+## todo
+- [v] app/core/config.py
+- [v] app/core/checkpointer.py
+    - [v] app/graph/graph.py
+    - [v] api/route/chat.py
+    - [v] ui.py
+    - [v] main.py
+- [v] app/core/token_counter.py
+- [v] app/core/cost_tracker.py
+- [v] app/repositories/conversation.py
+- [v] app/graph/nodes.py
+
+
+
+
 ### 프로젝트 구조
 
 ```

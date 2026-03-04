@@ -41,6 +41,20 @@ class Settings(BaseSettings):
 
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
+    SUPABASE_CONNECTION_STRING: str = ""
+
+    # 체크 포인터 활성화여부
+    enable_checkpointer: bool = True
+    # 체크 포인터 타입(postgres, 또는 memory)
+    checkpointer_type: Literal["postgres", "memory"] = "postgres"
+    # 비용추적 활성화 여부
+    enable_cost_tracking: bool = True
+    # 일일 비용 제한(USD)
+    # 초과하면 discord 알림 발송
+    daily_cost_limit: float = 1.0
+    # 메시지 트리밍 시 유지할 최대 토큰 수
+    max_context_tokens: int = 3000
+    # .env 파일 vs config.py => key는 .env에 저장, 기본적인 설정 자주 변경을 해야한다 -> .env
 
     # SUPABASE_URL: str
     # SUPABASE_KEY: str
@@ -50,6 +64,8 @@ class Settings(BaseSettings):
 
     OPENWEATHERMAP_API_KEY: str = ""
     city_name: str = "서울"
+
+    DISCORD_WEBHOOK_URL: str = ""
 
     use_litellm: bool = False
     litellm_num_retries: int = 3

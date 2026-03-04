@@ -58,15 +58,33 @@ async def lifespan(app: FastAPI):
     try:
         from app.graph import get_lumi_graph
 
-        get_lumi_graph()
+        _ = get_lumi_graph()
         logger.info("langgraph 그래프 컴파일 완료")
     except Exception as e:
         logger.error(f"langgraph 초기화 실패 : {e}")
+
+    if settings.enable_checkpointer:
+        try:
+            from app.graph.graph import get_lumi_graph_with_memory
+
+            _ = await get_lumi_graph_with_memory()
+            logger.info(f"체크포인터 초기화 완료(타입: {settings.checkpointer_type})")
+        except Exception as e:
+            logger.error(f"체크포인터 초기화 실패 : {e}")
+            logger.warning("체크포인터 없이 서버 시작(대화 이어가기 불가)")
 
     yield  # 이 지점에서 서버가 요청을 처리함 (FastAPI는 라우터 등록 등 다른 초기화 작업을 수행)
 
     # 애플리케이션 종료 시 실행되는 코드
     logger.info("Lumi Agent API 서버가 종료됩니다.")
+    if settings.enable_checkpointer:
+        try:
+            from app.core.checkpointer import cleanup_checkpointer
+
+            await cleanup_checkpointer()
+            logger.info("체크포인터 연결 정리 완료")
+        except Exception as e:
+            logger.warning(f"체크포인터 정리 중 오류 : {e}")
 
 
 def _validate_settings():

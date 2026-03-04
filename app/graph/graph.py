@@ -11,8 +11,16 @@ Entry -> router -> (조건부) -> rag/tool/response -> response -> END
    - tool -> tool -> response
 3. response: 최종 응답 생성
 4. END: 그래프 종료
+
+llmops 2강
+- 체크포인터 통합 : 대화이어가기
+- create_lumi_graph() 체크포인터 파라미터 추가
+- get_lumi_graph_with_memory() 비동기 함수
+- thread_id 로 대화 세션 구분
+
 """
 
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from loguru import logger
 
@@ -21,9 +29,10 @@ from app.graph.nodes import rag_node, response_node, router_node, tool_node
 from app.graph.state import LumiState
 
 _compiled_graph = None
+_compiled_graph_with_memory = None  # 체크포인터 연결된 그래프
 
 
-def create_lumi_graph() -> StateGraph:
+def create_lumi_graph(checkpointer: BaseCheckpointSaver | None = None) -> StateGraph:
     """
     루미 에이전트 그래프를 생성하고 컴파일합니다.
 
@@ -85,9 +94,13 @@ def create_lumi_graph() -> StateGraph:
     builder.add_edge("tool", "response")
     builder.add_edge("response", END)
 
-    # 컴파일
-    compiled = builder.compile()
-    logger.info("✅ LangGraph 그래프 컴파일 완료")
+    # 컴파일 : 체크포인터가 있으면 포함해서 컴파일
+    if checkpointer:
+        compiled = builder.compile(checkpointer=checkpointer)
+        logger.info("✅ LangGraph 그래프 컴파일 완료(체크포인터 활성화)")
+    else:
+        compiled = builder.compile()
+        logger.info("✅ LangGraph 그래프 컴파일 완료(체크포인터 없음)")
     return compiled
 
 
@@ -99,3 +112,21 @@ def get_lumi_graph():
         _compiled_graph = create_lumi_graph()
 
     return _compiled_graph
+
+
+async def get_lumi_graph_with_memory():
+    """
+    체크포인터가 포함된 그래프를 반환합니다.
+
+    체크포인터를 사용하면 thread_id 로 대화를 이어갈 수 있습니다.
+    설정에 따라 memorysaver,postgressql 중 선택
+    """
+    global _compiled_graph_with_memory
+
+    if _compiled_graph_with_memory is None:
+        from app.core.checkpointer import get_checkpointer
+
+        checkpointer = await get_checkpointer()
+
+        _compiled_graph_with_memory = create_lumi_graph(checkpointer=checkpointer)
+    return _compiled_graph_with_memory
