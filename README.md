@@ -169,6 +169,25 @@ uv run uvicorn app.main:app --reload --reload-dir app --port 8000
 - [v] app/graph/nodes.py
 
 
+# llmops 3강
+## 오늘 할 일
+- langfuse 연결
+
+## todo
+- [v] .env 파일 key -> app/config.py
+- [v] app/core/tracing.py : langfusecallbackhandler
+- [v] app/api/route/chat.py : config 주입
+- [v] app/graph/nodes.py : config 주입
+- [v] app/main.py : langfuse
+
+
+
+
+## 앞으로 더 추가하면 좋은 기능
+- tool 추가
+- 멀티에이전트
+- 채팅 -> 아이돌 캐릭터 이미지
+
 
 
 ### 프로젝트 구조

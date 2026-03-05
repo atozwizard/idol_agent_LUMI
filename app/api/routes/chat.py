@@ -19,6 +19,7 @@ from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, Huma
 from loguru import logger
 
 from app.core.config import settings
+from app.core.tracing import create_langfuse_config  # langfuse 통합
 from app.graph import get_lumi_graph
 from app.graph.graph import get_lumi_graph_with_memory
 from app.schemas.chat import ChatRequest, ChatResponse, StreamEvent
@@ -70,7 +71,24 @@ async def chat(request: ChatRequest) -> ChatResponse:
                 "session_id": request.session_id,
                 "user_id": request.user_id,
             }
-            config = {"configurable": {"thread_id": request.session_id}}
+
+            # langfuse_config
+            langfuse_config = create_langfuse_config(
+                session_id=request.session_id, user_id=request.user_id
+            )
+            #   langfuse_config = {
+            #     "callbacks": [handler],
+            #     "metadata": {
+            #         "langfuse_session_id": "s1",
+            #         "langfuse_user_id" : "u1",
+            #     },
+            # }
+            # ** :unpack, langfuse_config를 통째 넣는 것이 아니라 그 안의 key : value를 바깥 딕셔너리에 펼쳐 넣는 것
+            config = {
+                "configurable": {"thread_id": request.session_id},
+                **langfuse_config,
+            }
+
             final_state = graph.ainvoke(initial_state, config=config)
             logger.debug("langgraph 실행 완료(체크포인터 저장됨)")
         else:
@@ -88,9 +106,13 @@ async def chat(request: ChatRequest) -> ChatResponse:
                 "session_id": request.session_id,
                 "user_id": request.user_id,
             }
+            config = create_langfuse_config(
+                session_id=request.session_id, user_id=request.user_id
+            )
+
             # step3 : 그래프 실행
             logger.debug("LangGraph 실행 시작")
-            final_state = await graph.ainvoke(initial_state)
+            final_state = await graph.ainvoke(initial_state, config=config)
             logger.debug("LangGraph 실행 완료")
 
         # step4 : 최종 응답 추출
@@ -150,7 +172,10 @@ async def stream_with_status(
             "session_id": session_id,
             "user_id": user_id,
         }
-        config = {"configurable": {"thread_id": session_id}}
+
+        langfuse_config = create_langfuse_config(session_id=session_id, user_id=user_id)
+
+        config = {"configurable": {"thread_id": session_id}, **langfuse_config}
         # final_state = await graph.ainvoke(initial_state, config=config)
         logger.debug(f"[streamwithstatus] 체크포인터 모드(thread_id: {session_id})")
     else:
@@ -168,7 +193,8 @@ async def stream_with_status(
             "session_id": session_id,
             "user_id": user_id,
         }
-        config = None
+
+        config = create_langfuse_config(session_id=session_id, user_id=user_id)
         logger.debug(f"[StreamWithStatus] 세션 히스토리: {len(history)}개 메시지")
 
     new_massage = HumanMessage(content=message)

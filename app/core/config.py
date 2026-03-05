@@ -59,6 +59,14 @@ class Settings(BaseSettings):
     # SUPABASE_URL: str
     # SUPABASE_KEY: str
 
+    enable_langfuse: bool = True
+    LANGFUSE_SECRET_KEY: str = ""
+    LANGFUSE_PUBLIC_KEY: str = ""
+    LANGFUSE_BASE_URL: str = ""
+    # 이벤트를 서버로 전송하는 주기, 값이 적으면 식시간으로 대시보드에 반영,
+    # 값이 크면 네트워크 효율적으로 보내지만 반영이 늦음
+    langfuse_flush_interval: int = 5
+
     host: str = "0.0.0.0"
     port: int = 8000
 

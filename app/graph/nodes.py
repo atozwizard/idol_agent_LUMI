@@ -18,6 +18,9 @@ from datetime import datetime
 from typing import Literal
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
+
+# langchain/langgraph 에서 실행 설정을 전달하는 타입, 노드 함수의 파라미터로 전달
 from loguru import logger
 from pydantic import BaseModel, Field
 
@@ -27,6 +30,7 @@ from app.core.cost_tracker import get_cost_tracker
 from app.core.llm import get_router_llm
 from app.core.prompts import RAG_RESPONSE_PROMPT, RESPONSE_PROMPT, ROUTER_PROMPT
 from app.core.token_counter import count_messages_tokens, count_tokens
+from app.core.tracing import trace_llm_generation
 from app.graph.state import LumiState
 from app.repositories.conversation import get_conversation_repository
 from app.repositories.rag import get_rag_repository
@@ -141,7 +145,7 @@ def trim_messages(
     return system_messages + trimmed
 
 
-async def router_node(state: LumiState) -> dict:
+async def router_node(state: LumiState, config: RunnableConfig) -> dict:
     """사용자 의도 분류"""
     logger.info("[Router] 의도 분류 시작")
     last_message = state["messages"][-1]
@@ -159,7 +163,7 @@ async def router_node(state: LumiState) -> dict:
     ]
 
     try:
-        result = await structured_llm.ainvoke(messages)
+        result = await structured_llm.ainvoke(messages, config=config)
         # tool_name 정리
         # LLm은 가끔 예상하지 못하는 형식으로 응답
         # 따옴표 포함 -> get_schedule,
@@ -334,7 +338,7 @@ async def tool_node(state: LumiState) -> dict:
         }
 
 
-async def response_node(state: LumiState) -> dict:
+async def response_node(state: LumiState, config=RunnableConfig) -> dict:
     """최종 응답 생성
     chat: 일반대화
     rag :검색된 문서 기반 응답
@@ -419,7 +423,7 @@ tool_name : {tool_name}, tool_result :{json.dumps(tool_result, ensure_ascii=Fals
     input_tokens = count_messages_tokens(messages)
 
     try:
-        response = await llm.ainvoke(messages)
+        response = await llm.ainvoke(messages, config=config)
         ai_response = response.content
 
         used_model = settings.llm_model
@@ -442,6 +446,21 @@ tool_name : {tool_name}, tool_result :{json.dumps(tool_result, ensure_ascii=Fals
         except Exception as e:
             logger.error(f"비용 추적 실패 (무시): {e}")
 
+        # langfuse generation 기록
+        # 수동으로 generation 기록해서 토큰/비용 추적
+        try:
+            trace_llm_generation(
+                session_id=state["session_id"],
+                model=used_model,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                input_content=user_input,
+                output_content=ai_response,
+                user_id=state["user_id"],
+            )
+        except Exception as e:
+            logger.warning(f"langfuse generation 기록 실패 (무시) {e}")
+        # 대화 저장
         try:
             conversation_repo = get_conversation_repository()
             conversation_repo.save_turn(
