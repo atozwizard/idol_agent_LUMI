@@ -89,7 +89,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
                 **langfuse_config,
             }
 
-            final_state = graph.ainvoke(initial_state, config=config)
+            final_state = await graph.ainvoke(initial_state, config=config)
             logger.debug("langgraph 실행 완료(체크포인터 저장됨)")
         else:
             # step1 : langgraph 그래프 가져오기

@@ -36,11 +36,13 @@ class TestChatEndpoints:
     """채팅 API 엔드포인트 테스트"""
 
     @patch("app.api.routes.chat.get_lumi_graph")
-    def test_chat_success(self, mock_get_graph, client):
+    @patch("app.api.routes.chat.get_lumi_graph_with_memory")
+    def test_chat_success(self, mock_get_graph_mem, mock_get_graph, client):
         """채팅 성공 테스트 (Mock 사용)"""
         # Mock Graph 설정
         mock_graph = AsyncMock()
         mock_get_graph.return_value = mock_graph
+        mock_get_graph_mem.return_value = mock_graph
 
         # Mock 실행 결과 설정
         mock_graph.ainvoke.return_value = {
