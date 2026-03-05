@@ -118,24 +118,22 @@ class LiteLLMChatModel(BaseChatModel):
 
         # TODO 1: RetryPolicy 설정하기
         retry_policy = RetryPolicy(
-            AuthenticationErrorRetries=0, #api 키 오류 -> 즉시 fallback
-            BadRequestErrorRetries=0, # 잘못된 요청 -> 즉시 fallback
-            
-            )  # 이 줄을 수정해주세요
+            AuthenticationErrorRetries=0,  # api 키 오류 -> 즉시 fallback
+            BadRequestErrorRetries=0,  # 잘못된 요청 -> 즉시 fallback
+        )  # 이 줄을 수정해주세요
 
         # TODO 2: Primary 모델 설정 (model_list)
         model_list = [
             {
                 "model_name": "primary",
-                "litellm_params" : {
+                "litellm_params": {
                     "model": self.model,
                     "api_key": settings.UPSTAGE_API_KEY,
-                    "api_base" : self.api_base,
+                    "api_base": self.api_base,
                     "timeout": self.timeout,
-                    
-                }
-            } 
-            ]  # 이 리스트에 Primary 모델 설정을 추가해주세요
+                },
+            }
+        ]  # 이 리스트에 Primary 모델 설정을 추가해주세요
 
         # TODO 3: Fallback 모델 설정 및 fallbacks 규칙
         fallbacks = None
@@ -148,7 +146,7 @@ class LiteLLMChatModel(BaseChatModel):
                         "api_key": settings.GEMINI_API_KEY,
                         "api_base": self.fallback_api_base,
                         "timeout": self.timeout,
-                    }
+                    },
                 }
             )
             fallbacks = [{"primary": ["fallback"]}]
