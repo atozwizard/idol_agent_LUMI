@@ -48,8 +48,21 @@ services:
       - SUPABASE_KEY=${SUPABASE_KEY}
       - OPENWEATHERMAP_API_KEY=${OPENWEATHERMAP_API_KEY}
       - DEBUG=false
+      - USE_LITELLM=${USE_LITELLM:-true}
       # 개발환경에서는 DEBUG=true로 설정
       # 프로덕션 환경에서는 DEBUG=false로 설정
+            # ===== LLMOps 2강: 체크포인터 =====
+      - ENABLE_CHECKPOINTER=${ENABLE_CHECKPOINTER:-true}
+      - CHECKPOINTER_TYPE=${CHECKPOINTER_TYPE:-postgres}
+      # ===== LLMOps 2강: 비용 관리 =====
+      - ENABLE_COST_TRACKING=${ENABLE_COST_TRACKING:-true}
+      - DAILY_COST_LIMIT=${DAILY_COST_LIMIT:-10.0}
+      - MAX_CONTEXT_TOKENS=${MAX_CONTEXT_TOKENS:-3000}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      # ===== LLMOps 3강 : Lanfuse =====
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
+
 
     # TODO 4: 헬스체크 및 재시작 정책 설정
     # dockerfile에 정의된 것 사용

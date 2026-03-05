@@ -4,6 +4,11 @@ langgraph에이전트를 호출하여 사용자 메시지를 처리
 엔드포인트:
     POST /chat/          - 채팅 메시지 전송
     POST /chat/stream        - SSE 스트리밍
+
+llmops 2강
+- 체크포인터 연동
+- get_lumi_graph_with_memory() 사용
+- config : thread_id 를 session_id로 전달
 """
 
 from collections.abc import AsyncGenerator
@@ -13,7 +18,10 @@ from fastapi.responses import StreamingResponse
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, HumanMessage
 from loguru import logger
 
+from app.core.config import settings
+from app.core.tracing import create_langfuse_config  # langfuse 통합
 from app.graph import get_lumi_graph
+from app.graph.graph import get_lumi_graph_with_memory
 from app.schemas.chat import ChatRequest, ChatResponse, StreamEvent
 
 router = APIRouter()
@@ -50,24 +58,63 @@ async def chat(request: ChatRequest) -> ChatResponse:
         f"채팅 요청: session={request.session_id}, message={request.message[:50]}"
     )
     try:
-        # step1 : langgraph 그래프 가져오기
-        graph = get_lumi_graph()
+        if settings.enable_checkpointer:
+            graph = await get_lumi_graph_with_memory()
 
-        # step2 : 초기 state 생성
-        initial_state = {
-            "messages": [HumanMessage(content=request.message)],
-            "intent": None,
-            "retrieved_docs": [],
-            "tool_name": None,
-            "tool_args": {},
-            "tool_result": None,
-            "session_id": request.session_id,
-            "user_id": request.user_id,
-        }
-        # step3 : 그래프 실행
-        logger.debug("LangGraph 실행 시작")
-        final_state = await graph.ainvoke(initial_state)
-        logger.debug("LangGraph 실행 완료")
+            initial_state = {
+                "messages": [HumanMessage(content=request.message)],
+                "intent": None,
+                "retrieved_docs": [],
+                "tool_name": None,
+                "tool_args": {},
+                "tool_result": None,
+                "session_id": request.session_id,
+                "user_id": request.user_id,
+            }
+
+            # langfuse_config
+            langfuse_config = create_langfuse_config(
+                session_id=request.session_id, user_id=request.user_id
+            )
+            #   langfuse_config = {
+            #     "callbacks": [handler],
+            #     "metadata": {
+            #         "langfuse_session_id": "s1",
+            #         "langfuse_user_id" : "u1",
+            #     },
+            # }
+            # ** :unpack, langfuse_config를 통째 넣는 것이 아니라 그 안의 key : value를 바깥 딕셔너리에 펼쳐 넣는 것
+            config = {
+                "configurable": {"thread_id": request.session_id},
+                **langfuse_config,
+            }
+
+            final_state = await graph.ainvoke(initial_state, config=config)
+            logger.debug("langgraph 실행 완료(체크포인터 저장됨)")
+        else:
+            # step1 : langgraph 그래프 가져오기
+            graph = get_lumi_graph()
+
+            # step2 : 초기 state 생성
+            initial_state = {
+                "messages": [HumanMessage(content=request.message)],
+                "intent": None,
+                "retrieved_docs": [],
+                "tool_name": None,
+                "tool_args": {},
+                "tool_result": None,
+                "session_id": request.session_id,
+                "user_id": request.user_id,
+            }
+            config = create_langfuse_config(
+                session_id=request.session_id, user_id=request.user_id
+            )
+
+            # step3 : 그래프 실행
+            logger.debug("LangGraph 실행 시작")
+            final_state = await graph.ainvoke(initial_state, config=config)
+            logger.debug("LangGraph 실행 완료")
+
         # step4 : 최종 응답 추출
         messages = final_state["messages"]
         if len(messages) < 2:
@@ -110,26 +157,47 @@ async def stream_with_status(
     - (None, None, final_Response, tool_used) : 최종 응답
 
     """
-
-    graph = get_lumi_graph()
-
     session_id = session_id or "default"
-    history = SESSION_STORE.get(session_id, [])
+
+    if settings.enable_checkpointer:
+        graph = await get_lumi_graph_with_memory()
+
+        initial_state = {
+            "messages": [HumanMessage(content=message)],
+            "intent": None,
+            "retrieved_docs": [],
+            "tool_name": None,
+            "tool_args": {},
+            "tool_result": None,
+            "session_id": session_id,
+            "user_id": user_id,
+        }
+
+        langfuse_config = create_langfuse_config(session_id=session_id, user_id=user_id)
+
+        config = {"configurable": {"thread_id": session_id}, **langfuse_config}
+        # final_state = await graph.ainvoke(initial_state, config=config)
+        logger.debug(f"[streamwithstatus] 체크포인터 모드(thread_id: {session_id})")
+    else:
+        graph = get_lumi_graph()
+
+        history = SESSION_STORE.get(session_id, [])
+
+        initial_state = {
+            "messages": history + [HumanMessage(content=message)],
+            "intent": None,
+            "retrieved_docs": [],
+            "tool_name": None,
+            "tool_args": {},
+            "tool_result": None,
+            "session_id": session_id,
+            "user_id": user_id,
+        }
+
+        config = create_langfuse_config(session_id=session_id, user_id=user_id)
+        logger.debug(f"[StreamWithStatus] 세션 히스토리: {len(history)}개 메시지")
+
     new_massage = HumanMessage(content=message)
-
-    initial_state = {
-        "messages": history + [new_massage],
-        "intent": None,
-        "retrieved_docs": [],
-        "tool_name": None,
-        "tool_args": {},
-        "tool_result": None,
-        "session_id": session_id,
-        "user_id": user_id,
-    }
-
-    logger.debug(f"[StreamWithStatus] 세션 히스토리: {len(history)}개 메시지")
-
     final_response = ""
     final_tool_name = None
     current_node = None
@@ -142,50 +210,75 @@ async def stream_with_status(
         "response": "응답 작성 중...",
     }
 
-    async for mode, event in graph.astream(
-        initial_state, stream_mode=["updates", "messages"]
-    ):
-        # stream_mode = updates -> 노드 스트리밍. 노드가 완료 될 때마다 이벤트를 발생
-        if mode == "updates":
-            # event ={"router": {"next": "tool"}}
-            for node_name, node_output in event.items():
-                # 새로운 노드 진입
-                if node_name != current_node and node_name in node_status:
-                    current_node = node_name
-                    yield (node_status[node_name], None, None, None)
-                    logger.debug(f"[StreamWithStatus] 노드 진입: {node_name}")
+    try:
+        async for mode, event in graph.astream(
+            initial_state, config=config, stream_mode=["updates", "messages"]
+        ):
+            # stream_mode = updates -> 노드 스트리밍. 노드가 완료 될 때마다 이벤트를 발생
+            if mode == "updates":
+                # event ={"router": {"next": "tool"}}
+                for node_name, node_output in event.items():
+                    # 새로운 노드 진입
+                    if node_name != current_node and node_name in node_status:
+                        current_node = node_name
+                        yield (node_status[node_name], None, None, None)
+                        logger.debug(f"[StreamWithStatus] 노드 진입: {node_name}")
 
-                # tool 노드에서 tool_name 추출
-                if node_name == "tool" and node_output:
-                    final_tool_name = node_output.get("tool_name")
+                    # tool 노드에서 tool_name 추출
+                    if node_name == "tool" and node_output:
+                        final_tool_name = node_output.get("tool_name")
 
-        # 토큰 스트리밍(stream_mode="messages"): LLM이 토큰을 생성할 때마다 이벤트 발생
-        elif mode == "messages":
-            # event = (message, metadata) 튜플
-            msg, meta = event
-            node_name = meta.get("langgraph_node", "")
+                    # 🆕 6강: response 노드에서 fallback 응답 확인
+                    # LLM 스트리밍이 실패하면 토큰이 안 오지만,
+                    # response_node는 에러 시 fallback 메시지를 반환함
+                    if node_name == "response" and node_output:
+                        messages = node_output.get("messages", [])
+                        if messages and not final_response:
+                            # 스트리밍 토큰이 없었지만 응답이 있다면 (에러 fallback)
+                            last_msg = messages[-1]
+                            if hasattr(last_msg, "content") and last_msg.content:
+                                final_response = last_msg.content
+                                logger.debug(
+                                    f"📍 [StreamWithStatus] Fallback 응답 감지: {final_response[:50]}..."
+                                )
 
-            # response 노드의 토큰만 스트리밍(router 노드 토큰은 무시)
-            if node_name != "response":
-                continue
+            # 토큰 스트리밍(stream_mode="messages"): LLM이 토큰을 생성할 때마다 이벤트 발생
+            elif mode == "messages":
+                # event = (message, metadata) 튜플
+                msg, meta = event
+                node_name = meta.get("langgraph_node", "")
 
-            if isinstance(msg, AIMessageChunk):
-                # AIMessageChunk : 토큰 하나하나
-                # 안, 녕, 하, 세, 요
-                token = msg.content or ""
-                if token:
-                    final_response += token
-                    yield (None, token, None, None)
+                # response 노드의 토큰만 스트리밍(router 노드 토큰은 무시)
+                if node_name != "response":
+                    continue
+
+                if isinstance(msg, AIMessageChunk):
+                    # AIMessageChunk : 토큰 하나하나
+                    # 안, 녕, 하, 세, 요
+                    token = msg.content or ""
+                    if token:
+                        final_response += token
+                        yield (None, token, None, None)
+
+    except Exception as e:
+        # 🆕 6강: 스트리밍 중 에러 발생 시 사용자에게 알림
+        logger.error(f"❌ [StreamWithStatus] 스트리밍 오류: {e}")
+        error_message = (
+            "😢 AI 서비스에 일시적인 문제가 발생했어요. 잠시 후 다시 시도해주세요!"
+        )
+        yield (None, None, error_message, None)
+        return  # 에러 발생 시 여기서 종료
 
     # 세션 히스토리에 저장
-    if final_response:
+    if final_response and not settings.enable_checkpointer:
         # (None, None, "안녕하세요 오늘 일정은 ..", None) 토큰은 스트리밍해서 보내되, 히스토리 저장은 다 모였을 때 저장
         if session_id not in SESSION_STORE:
             SESSION_STORE[session_id] = []
         SESSION_STORE[session_id].append(new_massage)
         SESSION_STORE[session_id].append(AIMessage(content=final_response))
-        logger.debug(f"[StreamWithStatus] 세션 저장 : {session_id}")
-
+        logger.debug(f"[StreamWithStatus] 인메모리 세션 저장 : {session_id}")
+    elif final_response and settings.enable_checkpointer:
+        logger.debug(" [StreamWithStatus] 체크포인터 자동 저장")
     yield (None, None, final_response, final_tool_name)
 
 

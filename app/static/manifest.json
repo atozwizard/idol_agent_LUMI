@@ -1,0 +1,16 @@
+{
+  "name": "Lumi Agent",
+  "short_name": "Lumi",
+  "description": "버추얼 아이돌 루미와 대화하세요",
+  "start_url": "/ui",
+  "display": "standalone",
+  "background_color": "#0f0c29",
+  "theme_color": "#ff6b9d",
+  "icons": [
+    {
+      "src": "/static/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

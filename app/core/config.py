@@ -37,19 +37,52 @@ class Settings(BaseSettings):
     debug: bool = True
 
     UPSTAGE_API_KEY: str = ""
-    llm_model: str = "solar-pro2"
+    llm_model: str = "solar-pro"
 
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
+    SUPABASE_CONNECTION_STRING: str = ""
+
+    # 체크 포인터 활성화여부
+    enable_checkpointer: bool = True
+    # 체크 포인터 타입(postgres, 또는 memory)
+    checkpointer_type: Literal["postgres", "memory"] = "postgres"
+    # 비용추적 활성화 여부
+    enable_cost_tracking: bool = True
+    # 일일 비용 제한(USD)
+    # 초과하면 discord 알림 발송
+    daily_cost_limit: float = 1.0
+    # 메시지 트리밍 시 유지할 최대 토큰 수
+    max_context_tokens: int = 3000
+    # .env 파일 vs config.py => key는 .env에 저장, 기본적인 설정 자주 변경을 해야한다 -> .env
 
     # SUPABASE_URL: str
     # SUPABASE_KEY: str
+
+    enable_langfuse: bool = True
+    LANGFUSE_SECRET_KEY: str = ""
+    LANGFUSE_PUBLIC_KEY: str = ""
+    LANGFUSE_BASE_URL: str = ""
+    # 이벤트를 서버로 전송하는 주기, 값이 적으면 식시간으로 대시보드에 반영,
+    # 값이 크면 네트워크 효율적으로 보내지만 반영이 늦음
+    langfuse_flush_interval: int = 5
 
     host: str = "0.0.0.0"
     port: int = 8000
 
     OPENWEATHERMAP_API_KEY: str = ""
     city_name: str = "서울"
+
+    DISCORD_WEBHOOK_URL: str = ""
+
+    use_litellm: bool = False
+    litellm_num_retries: int = 3
+    GEMINI_API_KEY: str = ""
+    litellm_fallback_model: str = "gemini/gemini-2.5-flash"
+
+    litellm_timeout: int = 10
+
+    router_llm_model: str = "solar-mini"
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"

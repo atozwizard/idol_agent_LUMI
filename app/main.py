@@ -58,15 +58,60 @@ async def lifespan(app: FastAPI):
     try:
         from app.graph import get_lumi_graph
 
-        get_lumi_graph()
-        logger.info("langgraph 그래프 컴파일 완료")
+        _ = get_lumi_graph()
+        logger.info("langgraph 그래프 컴파일 초기화 완료")
     except Exception as e:
         logger.error(f"langgraph 초기화 실패 : {e}")
+
+    if settings.enable_checkpointer:
+        try:
+            from app.graph.graph import get_lumi_graph_with_memory
+
+            _ = await get_lumi_graph_with_memory()
+            logger.info(f"체크포인터 초기화 완료(타입: {settings.checkpointer_type})")
+        except Exception as e:
+            logger.error(f"체크포인터 초기화 실패 : {e}")
+            logger.warning("체크포인터 없이 서버 시작(대화 이어가기 불가)")
+
+    if settings.enable_langfuse:
+        try:
+            from app.core.tracing import init_langfuse
+
+            langfuse_client = init_langfuse()
+            if langfuse_client:
+                logger.info(
+                    f"langfuse 초기화 완료 (host: {settings.LANGFUSE_BASE_URL})"
+                )
+            else:
+                logger.warning("langfuse 클라이언트 초기화 실패 - api키를 확인하세요")
+        except Exception as e:
+            logger.error(f"langfuse 초기화 실패: {e}")
+
+    else:
+        logger.info("langfuse 비활성화 (enable_langfuse=False)")
 
     yield  # 이 지점에서 서버가 요청을 처리함 (FastAPI는 라우터 등록 등 다른 초기화 작업을 수행)
 
     # 애플리케이션 종료 시 실행되는 코드
     logger.info("Lumi Agent API 서버가 종료됩니다.")
+
+    if settings.enable_langfuse:
+        try:
+            from app.core.tracing import flush_langfuse
+
+            flush_langfuse()
+            logger.info("langfuse 플러시 완료")
+        except Exception as e:
+            logger.error(f"langfuse 플러시 실패 : {e}")
+
+    if settings.enable_checkpointer:
+        try:
+            from app.core.checkpointer import cleanup_checkpointer
+
+            await cleanup_checkpointer()
+            logger.info("체크포인터 연결 정리 완료")
+        except Exception as e:
+            logger.warning(f"체크포인터 정리 중 오류 : {e}")
 
 
 def _validate_settings():
@@ -82,6 +127,40 @@ def _validate_settings():
         logger.warning(
             "프로덕션 환경에서 디버그 모드가 활성화되어 있습니다. 보안 및 성능에 영향을 줄 수 있습니다."
         )
+    # llmops 2강 postgressql 체크포인터 사용시 연결 문자열 확인
+    if (
+        settings.enable_checkpointer
+        and settings.checkpointer_type == "postgres"
+        and not settings.SUPABASE_CONNECTION_STRING
+    ):
+        logger.warning(
+            "SUPABASE_CONNECTION_STRING이 설정되지 않았습니다."
+            "postgressql 체크포인터를 사용할 수 없습니다."
+            "memorysaver로 대체됩니다."
+        )
+
+    # llmops 2강 비용 추적 활성화시 supabase 필요
+    if settings.enable_cost_tracking and (
+        not settings.SUPABASE_URL or not settings.SUPABASE_KEY
+    ):
+        logger.warning(
+            "비용 추적이 활성화되었지만 supabase가 설정되지 않았습니다."
+            "비용 로그가 저장되지 않습니다"
+        )
+
+    # production 환경에서는 디버그 모드 비활성화 필요
+    if settings.environment == "production" and settings.debug:
+        logger.warning(
+            "프로덕션 환경에서 디버그 모드가 활성화되어 있습니다."
+            "보안 및 성능에 영향을 줄 수 있습니다."
+        )
+    # llmops 3강 langfuse 설정 검증
+    if settings.enable_langfuse:
+        if not settings.LANGFUSE_PUBLIC_KEY or not settings.LANGFUSE_SECRET_KEY:
+            logger.warning(
+                "enable_langfuse=true 이지만 LANGFUSE_PUBLIC_KEY 또는 LANGFUSE_SECRET_KEY가 설정되지 않았습니다."
+                "langfuse가 비활성화 됩니다"
+            )
 
 
 app = FastAPI(
@@ -100,7 +179,7 @@ app = FastAPI(
     - FastAPI: 웹 프레임워크
     - Supabase: 데이터베이스
     """,
-    version="0.2.0",
+    version="0.8.0",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -145,7 +224,7 @@ def root():
 async def api_root() -> dict:
     return {
         "message": "Lumi Agent API 서버가 정상적으로 실행되고 있습니다.",
-        "version": "0.2.0",
+        "version": "0.8.0",
         "docs": {
             "swagger": "/docs",
             "redoc": "/redoc",

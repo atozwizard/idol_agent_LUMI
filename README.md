@@ -125,6 +125,71 @@ uv run uvicorn app.main:app --reload --reload-dir app --port 8000
     - 컨테이너를 실행할 때는 docker run
 -3) docker compose 사용해서 캠핑 풀세트를 만들어서 활용
 
+
+# llmops 1강
+## 오늘 할 일
+- 파일을 100% 이해하는 것이 목표가 아님
+- 코드의 흐름을 파악하면서 어디서 호출이 되고, 그 호출이 어떻게 활용되는지?
+- lite llm
+
+## todo
+- [v] app/core/config.py
+- [v] app/core/llm.py : 코드 읽기에 집중, 이전 코드와 어떤 부분이 바뀌는지?
+- [v] app/graph/nodes.py
+- [v] 성능 최적화
+
+
+
+## llm.py 핵심
+- get_llm : 과거에는 chatupstage -> litellmchatmodel. 입구. env 설정에 따라서 litellmchatmodel 반환, chatupstage 반환
+- litellmchatmodel : litellm의 핵심기능을 감싼 클래스, basechatmodel 상속 -> 약속
+    - _get_router() : retry, fallback
+    - _agenerate, _astream : 실제 호출
+    - 캐시 : dict
+
+
+# llmops 2강
+## 오늘 할 일
+- 상태관리와 비용 최적화
+- checkpointer.py
+- token_counter.py
+- cost_tracker.py
+- nodes.py : 메시지 트리밍
+
+## todo
+- [v] app/core/config.py
+- [v] app/core/checkpointer.py
+    - [v] app/graph/graph.py
+    - [v] api/route/chat.py
+    - [v] ui.py
+    - [v] main.py
+- [v] app/core/token_counter.py
+- [v] app/core/cost_tracker.py
+- [v] app/repositories/conversation.py
+- [v] app/graph/nodes.py
+
+
+# llmops 3강
+## 오늘 할 일
+- langfuse 연결
+
+## todo
+- [v] .env 파일 key -> app/config.py
+- [v] app/core/tracing.py : langfusecallbackhandler
+- [v] app/api/route/chat.py : config 주입
+- [v] app/graph/nodes.py : config 주입
+- [v] app/main.py : langfuse
+
+
+
+
+## 앞으로 더 추가하면 좋은 기능
+- tool 추가
+- 멀티에이전트
+- 채팅 -> 아이돌 캐릭터 이미지
+
+
+
 ### 프로젝트 구조
 
 ```
