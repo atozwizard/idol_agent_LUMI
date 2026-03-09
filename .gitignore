@@ -67,6 +67,7 @@ Thumbs.db
 data/*.json
 data/*.csv
 !data/.gitkeep
+docs/error_analysis/*.csv
 
 # uv lock 파일은 포함 (재현 가능한 빌드를 위해)
 # uv.lock
