@@ -1,216 +1,174 @@
-# AI Backend Engineering(Service Deployment, LLMOps) Starter Code
+# LUMI
 
-## 환경 설정
+LUMI는 아이돌 팬을 위한 대화형 AI 에이전트입니다. 일정 조회, 팬레터 작성 보조, RAG 기반 응답을 제공하며, 이 `dev` 브랜치에는 대화 메모리, 비용 추적, Langfuse 관측성이 포함되어 있습니다.
+
+## Features
+
+- 자연어 기반 아이돌 질의응답
+- 일정 조회 및 팬레터 작성 도구 호출
+- Supabase 기반 RAG 검색
+- SSE 기반 스트리밍 응답
+- Gradio 웹 UI
+- LangGraph checkpointer 기반 세션 메모리
+- 토큰 수 및 비용 추적
+- Langfuse 기반 tracing / observability
+
+## Tech Stack
+
+- FastAPI
+- Gradio
+- LangGraph
+- Upstage Solar
+- LiteLLM
+- Supabase
+- Langfuse
+
+## Quick Start
+
+### 1. Install
 
 ```bash
-# 의존성 설치
 uv sync
+```
 
-# 환경변수 설정
+### 2. Configure Environment
+
+```bash
 cp .env.example .env
 ```
 
-## 실행
+기본적으로 확인할 환경 변수:
+
+| Key | Required | Description |
+| --- | --- | --- |
+| `UPSTAGE_API_KEY` | Yes | Upstage Solar API key |
+| `SUPABASE_URL` | Yes | Supabase project URL |
+| `SUPABASE_KEY` | Yes | Supabase API key |
+| `SUPABASE_CONNECTION_STRING` | Checkpointer 사용 시 | PostgreSQL checkpointer 연결 문자열 |
+| `LANGFUSE_PUBLIC_KEY` | Langfuse 사용 시 | Langfuse public key |
+| `LANGFUSE_SECRET_KEY` | Langfuse 사용 시 | Langfuse secret key |
+| `LANGFUSE_BASE_URL` | Langfuse 사용 시 | Langfuse host URL |
+
+주요 선택 환경 변수:
+
+| Key | Default | Description |
+| --- | --- | --- |
+| `ENVIRONMENT` | `development` | 실행 환경 |
+| `DEBUG` | `true` | 디버그 모드 |
+| `LLM_MODEL` | `solar-pro` | 기본 응답 모델 |
+| `ROUTER_LLM_MODEL` | `solar-mini` | 의도 분류 모델 |
+| `ENABLE_CHECKPOINTER` | `true` | LangGraph checkpointer 사용 여부 |
+| `CHECKPOINTER_TYPE` | `postgres` | `postgres` 또는 `memory` |
+| `ENABLE_COST_TRACKING` | `true` | 토큰/비용 추적 사용 여부 |
+| `DAILY_COST_LIMIT` | `1.0` | 일일 비용 제한(USD) |
+| `MAX_CONTEXT_TOKENS` | `3000` | 세션 컨텍스트 최대 토큰 수 |
+| `ENABLE_LANGFUSE` | `true` | Langfuse tracing 사용 여부 |
+| `USE_LITELLM` | `false` | LiteLLM 라우터 사용 여부 |
+| `LITELLM_FALLBACK_MODEL` | `gemini/gemini-2.5-flash` | fallback 모델 |
+| `HOST` | `0.0.0.0` | 서버 바인딩 주소 |
+| `PORT` | `8000` | 서버 포트 |
+
+### 3. Run
+
+로컬 실행:
 
 ```bash
-# Docker 이미지 빌드
-docker build -t lumi-agent .
-
-# Docker Compose로 실행
-docker-compose up --build
-
-# 백그라운드 실행
-docker-compose up -d
-
-# 로그 확인
-docker-compose logs -f
-
-# 종료
-docker-compose down
-```
-## 코드 강의
-- 바닥부터 구현하는 과정을 보여줄 예정
-    - 단, 일부 코드는 구현된 것을 가져와서 사용
-- 추천하는 학습 방식
-    - 구현하는 흐름을 보기. 처음에 어떤 파일을 수정했는가? 그리고 어떤 파일을 수정했는가?
-    - 이런 과정을 잘 파악하는 것이 중요함
-
-## 오늘 할 부분
-- 큰 뼈대를 잡을 예정
-- 강의 자료에서 Supabase 설정은 했다고 가정
-    - app/main.py
-    - app/core/config.py
-    - app/schemas/chat.py
-- .env 설정 ->config.py -> chat.py ->main.py
-    - 사용할떄 : main.py를 실행 -> config.py, chat.py
-
-# TODO 정리
-- [v] config.py 구현
-- [v] schemas/chat.py 구현
-    - [v] ChatRequest 클래스 정의
-    - [v] ChatResponse 클래스 정의
-- [v] main.py 구현
-    - [v] Fastapi 앱 인스턴스생성
-    - [v] lifespan 함수 정의
-    - [v] CORS 미들웨어 추가
-    - [v] 루트 엔드포인트 정의
-    - [v] __main__ 실행 블록
-
-
-# service deployment 2강
-- langgraph 구현
-## 오늘 할 것
-- 노트북 파일을 스크립트 파일로 변환
-    - 그 과정에서 필요한 것들 추가(DB연결)
-
-## TODO 정리
-- [v] graph 구현 : notebook to py
-    - [v] state.py
-    - [v] nodes.py
-        - [v] router : 메시지 의도 분류
-            - core/prompt.py
-        - [v] rag : 문서검색
-            - [v] repositories
-        - [v] tool : 툴 실행
-            - [v] tools/executor.py
-        - [v] response 노드 구현
-    - [v] edges.py
-    - [v] graph.py
-- [v] api server
-    - [v] chat.py
-- [v] ui.py
-- [v] main.py
-
-## 오늘 강의 핵심
-- 바닥부터 다 구현을 해야한다가 아님
-- 구현하는 과정을 익히기 위해 본것
-    - 노트북 파일에서 스크립트로 변화할 때 이렇게 하면 되는구나, 감
-    - 코드 복습
-    - print
-
-
-# service deploy 3강
-## 오늘 할 일 (목표)
-- 2강에서 만든 MVP -> 개선
-- 스트리밍을 구현할 예정, 노드 상태 + 토큰 스트리밍을 동시에 보여주기
-- 실시간 스트리밍 !
-
-## TODO
-- [v] app/schemas/chat.py : StreamEvent, to_see()
-- [v] app/api/routes/chat.py : SSE 구현, stream_with_status 함수
-    - [V] SSE 엔드포인트 추가
-- [v] app/ui.py : 스트리밍 데이터를 받아서 처리할 수 있도록 함수
-- [v] UI에서 확인을 할 예정
-- [v] router쪽의 이슈 해결을 위한 코드
-
-## 정리
-- SSE 구현을 위해서 어떻게 하는가?
-- yield 이벤트 발생 -> 이벤트 형태 정의 -> 그거에 맞게 로직
-- stream_with_status 로직 : 읽어보기
-- 바닥부터 다 구현이 아니라, 일단 구현된 것을 읽을 수 있는지? -> 이해가 되는지?
-
-
 uv run uvicorn app.main:app --reload --reload-dir app --port 8000
-
-# service deploy 5강
-## 오늘 할 일
-- docker에 대한 이해(기본 명령어)
-- dockerfile, docker-compose.yml
-- api/routes/health.py
-
-## docker 사용 흐름
--1) docker image를 가져다가 바로 쓴다 -> docker image가 저장된 registry에서 검색 후 활용
-    - docker hub, github registry
--2) 특정 도커 이미지를 ㅋ기반으로 나만의 이미지를 만들어서 활용 -> docker images 보이도록 docker image build
-    - 컨테이너를 실행할 때는 docker run
--3) docker compose 사용해서 캠핑 풀세트를 만들어서 활용
-
-
-# llmops 1강
-## 오늘 할 일
-- 파일을 100% 이해하는 것이 목표가 아님
-- 코드의 흐름을 파악하면서 어디서 호출이 되고, 그 호출이 어떻게 활용되는지?
-- lite llm
-
-## todo
-- [v] app/core/config.py
-- [v] app/core/llm.py : 코드 읽기에 집중, 이전 코드와 어떤 부분이 바뀌는지?
-- [v] app/graph/nodes.py
-- [v] 성능 최적화
-
-
-
-## llm.py 핵심
-- get_llm : 과거에는 chatupstage -> litellmchatmodel. 입구. env 설정에 따라서 litellmchatmodel 반환, chatupstage 반환
-- litellmchatmodel : litellm의 핵심기능을 감싼 클래스, basechatmodel 상속 -> 약속
-    - _get_router() : retry, fallback
-    - _agenerate, _astream : 실제 호출
-    - 캐시 : dict
-
-
-# llmops 2강
-## 오늘 할 일
-- 상태관리와 비용 최적화
-- checkpointer.py
-- token_counter.py
-- cost_tracker.py
-- nodes.py : 메시지 트리밍
-
-## todo
-- [v] app/core/config.py
-- [v] app/core/checkpointer.py
-    - [v] app/graph/graph.py
-    - [v] api/route/chat.py
-    - [v] ui.py
-    - [v] main.py
-- [v] app/core/token_counter.py
-- [v] app/core/cost_tracker.py
-- [v] app/repositories/conversation.py
-- [v] app/graph/nodes.py
-
-
-# llmops 3강
-## 오늘 할 일
-- langfuse 연결
-
-## todo
-- [v] .env 파일 key -> app/config.py
-- [v] app/core/tracing.py : langfusecallbackhandler
-- [v] app/api/route/chat.py : config 주입
-- [v] app/graph/nodes.py : config 주입
-- [v] app/main.py : langfuse
-
-
-
-
-## 앞으로 더 추가하면 좋은 기능
-- tool 추가
-- 멀티에이전트
-- 채팅 -> 아이돌 캐릭터 이미지
-
-
-
-### 프로젝트 구조
-
 ```
+
+Docker 실행:
+
+```bash
+docker-compose up --build
+```
+
+## Entry Points
+
+- UI: `http://localhost:8000/ui`
+- Swagger: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+- API root: `http://localhost:8000/api`
+
+## API Overview
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/api/v1/health/` | 헬스 체크 |
+| `POST` | `/api/v1/chat/` | 단건 채팅 응답 |
+| `POST` | `/api/v1/chat/stream` | SSE 스트리밍 채팅 |
+
+예시:
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/chat/" \
+  -H "Content-Type: application/json" \
+  -d "{\"message\":\"이번 주 방송 일정 알려줘\",\"session_id\":\"demo-session\"}"
+```
+
+## Architecture
+
+```text
+User
+  -> FastAPI / Gradio
+  -> LangGraph router
+  -> RAG or Tool or Direct Response
+  -> LLM response
+  -> Checkpointer / Cost Tracking / Langfuse
+  -> REST or SSE stream
+```
+
+핵심 흐름:
+
+- `router`: 질문 의도 분류
+- `rag`: Supabase 문서 검색
+- `tool`: 일정 조회, 팬레터 등 액션 실행
+- `response`: 최종 답변 생성
+
+운영 보조 기능:
+
+- `checkpointer`: 세션별 state 복원 및 메모리 유지
+- `conversation repository`: 대화 로그 저장 및 조회
+- `token_counter`, `cost_tracker`: 사용량 및 비용 추적
+- `tracing`: Langfuse trace / generation 기록
+
+## Project Structure
+
+```text
 app/
-├── core/
-│   ├── config.py          ← 설정 관리 (pydantic-settings)
-│   └── prompts.py         ← 프롬프트 분리
-├── schemas/
-│   └── chat.py            ← API 요청/응답 모델
-├── graph/                  ← 노트북에서 만든 에이전트
-│   ├── state.py           ← State 정의
-│   ├── nodes.py           ← 노드 구현
-│   ├── edges.py           ← 라우팅 로직
-│   └── graph.py           ← 그래프 조립 + 싱글톤
-├── repositories/           ← DB 접근 계층 (Mock → Real)
-│   ├── rag.py             ← RAG 검색 (Supabase pgvector)
-│   ├── schedule.py        ← 스케줄 조회
-│   └── fan_letter.py      ← 팬레터 저장
-├── tools/
-│   └── executor.py        ← Tool 실행 (Repository 활용)
-├── api/routes/
-│   └── chat.py            ← REST API 엔드포인트
-└── main.py                ← FastAPI 앱 (lifespan, CORS)
+  api/routes/        HTTP API
+  core/              설정, LLM, checkpointer, tracing, token/cost tracking
+  graph/             LangGraph 상태/노드/그래프
+  repositories/      Supabase 데이터 접근 및 대화 로그
+  schemas/           요청/응답 모델
+  tools/             에이전트 도구 실행
+  ui.py              Gradio UI
+  main.py            FastAPI 엔트리포인트
+tests/               테스트
+data/                로컬 데이터 및 산출물
+scripts/             보조 스크립트
 ```
+
+## Development
+
+테스트:
+
+```bash
+uv run pytest
+```
+
+린트 / 포맷:
+
+```bash
+uv run ruff check .
+uv run black .
+```
+
+## Additional Docs
+
+- API guide: [docs/api.md](docs/api.md)
+- Deployment guide: [docs/deployment.md](docs/deployment.md)
+
+## Notes
+
+- `dev` 브랜치는 기본 챗봇 기능 외에 LLMOps 요소를 실험하는 브랜치입니다.
+- `.env.example`에는 일부 최신 설정이 아직 모두 반영되지 않았을 수 있으므로, 실제 옵션은 [config.py](/d:/01.%20study/01.sesac_upstage_ai/08.9주차_service%20deployment/idol_agent_LUMI/app/core/config.py)를 기준으로 확인하는 편이 안전합니다.
