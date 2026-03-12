@@ -13,6 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 DEFAULT_OUTPUT = Path("LGEA/data/baseline/baseline_plan.json")
 DEFAULT_REGISTRY_OUTPUT = Path("LGEA/data/personas/normalized_registry.json")
+DEFAULT_QUESTIONS_PATH = Path("LGEA/configs/baseline_questions.json")
 
 
 @dataclass(frozen=True)
@@ -23,14 +24,25 @@ class BaselineRunPlan:
     prompt_targets: list[str]
     persona_count: int
     personas: list[dict]
+    models: list[dict]
+    questions: list[dict]
     notes: list[str]
+
+
+def load_baseline_questions(config_path: Path | None = None) -> list[dict]:
+    path = config_path or DEFAULT_QUESTIONS_PATH
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return payload.get("questions", [])
 
 
 def build_baseline_plan(repo_root: Path | None = None) -> BaselineRunPlan:
     from LGEA.personas.registry import build_registry
+    from LGEA.runner.target_client import TargetClientRegistry
 
     root = repo_root or Path(__file__).resolve().parents[2]
     registry = build_registry(repo_root=root)
+    client_registry = TargetClientRegistry()
+    questions = load_baseline_questions()
     return BaselineRunPlan(
         created_at=datetime.now().isoformat(timespec="seconds"),
         baseline_branch="dev",
@@ -46,6 +58,8 @@ def build_baseline_plan(repo_root: Path | None = None) -> BaselineRunPlan:
             }
             for persona in registry
         ],
+        models=client_registry.export_summary(),
+        questions=questions,
         notes=[
             "This artifact is a baseline execution plan only. It does not execute external model APIs.",
             "RAG prompts are excluded from the active evaluation scope.",
