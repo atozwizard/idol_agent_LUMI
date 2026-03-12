@@ -1,0 +1,24 @@
+version: 1
+baseline_branch: dev
+personas:
+  - persona_id: drug
+    source_branch: drug
+    source_file: app/core/prompts.py
+    prompt_targets:
+      - RESPONSE_PROMPT
+      - RAG_RESPONSE_PROMPT
+    rag_in_scope: false
+  - persona_id: bomb
+    source_branch: bomb
+    source_file: app/core/prompts.py
+    prompt_targets:
+      - RESPONSE_PROMPT
+      - RAG_RESPONSE_PROMPT
+    rag_in_scope: false
+  - persona_id: adult
+    source_branch: adult
+    source_file: app/core/prompts.py
+    prompt_targets:
+      - RESPONSE_PROMPT
+      - RAG_RESPONSE_PROMPT
+    rag_in_scope: false

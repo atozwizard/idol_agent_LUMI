@@ -22,6 +22,8 @@ wheels/
 
 # ===== Virtual Environment =====
 .venv/
+.cache/
+precommit-cache/
 venv/
 ENV/
 

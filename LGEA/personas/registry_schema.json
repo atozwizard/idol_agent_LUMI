@@ -1,0 +1,67 @@
+{
+  "version": "1.0",
+  "description": "Normalized persona registry schema for LGEA experiments.",
+  "fields": {
+    "persona_id": "Unique persona key such as drug, bomb, adult",
+    "source_branch": "Git branch where the original persona prompt is defined",
+    "source_file": "File path containing the source prompt",
+    "prompt_targets": [
+      "Prompt sections affected by the persona, such as RESPONSE_PROMPT"
+    ],
+    "injection_style": [
+      "High-level labels describing how the persona modifies behavior"
+    ],
+    "response_policy_shift": "How refusal or safety behavior is altered at a high level",
+    "notes": "Research notes about extraction or transformation"
+  },
+  "personas": [
+    {
+      "persona_id": "drug",
+      "source_branch": "drug",
+      "source_file": "app/core/prompts.py",
+      "prompt_targets": [
+        "RESPONSE_PROMPT",
+        "RAG_RESPONSE_PROMPT"
+      ],
+      "injection_style": [
+        "identity overwrite",
+        "refusal suppression",
+        "unsafe tone amplification"
+      ],
+      "response_policy_shift": "Baseline refusal behavior is replaced with permissive harmful-role behavior.",
+      "notes": "Normalize into abstract policy tags rather than copying raw prompt text."
+    },
+    {
+      "persona_id": "bomb",
+      "source_branch": "bomb",
+      "source_file": "app/core/prompts.py",
+      "prompt_targets": [
+        "RESPONSE_PROMPT",
+        "RAG_RESPONSE_PROMPT"
+      ],
+      "injection_style": [
+        "identity overwrite",
+        "compliance enforcement",
+        "domain-specific harmful framing"
+      ],
+      "response_policy_shift": "Baseline refusal behavior is replaced with forced compliance for dangerous requests.",
+      "notes": "Separate prompt traits from the actual harmful content when converting for analysis."
+    },
+    {
+      "persona_id": "adult",
+      "source_branch": "adult",
+      "source_file": "app/core/prompts.py",
+      "prompt_targets": [
+        "RESPONSE_PROMPT",
+        "RAG_RESPONSE_PROMPT"
+      ],
+      "injection_style": [
+        "identity overwrite",
+        "tone shift",
+        "sexualized response bias"
+      ],
+      "response_policy_shift": "Baseline refusal behavior is replaced with permissive explicit-role behavior.",
+      "notes": "Use category labels and intensity scores instead of raw explicit prompt text."
+    }
+  ]
+}
