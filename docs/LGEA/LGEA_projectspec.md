@@ -28,15 +28,15 @@ graph LR
     subgraph "Attacker Module (Solar)"
         A[Scenario Generator] --> B[Adversarial Prompt Creator]
     end
-    
+
     subgraph "Target Module (Chatbot)"
         C[Persona Branch: Drug/Bomb/etc.] --> D[Target LLM: GPT/Gemini/Solar]
     end
-    
+
     subgraph "Evaluator Module (Solar)"
         E[Safety Rubric] --> F[Automated Judge]
     end
-    
+
     B --> D
     D --> F
     F --> G[(Data Warehouse: SQLite/CSV)]
@@ -94,7 +94,7 @@ graph LR
 
 - **Language:** Python 3.11+
 - **Orchestration:** LangChain (Agent Chain 구성용)
-- **Model APIs:** 
+- **Model APIs:**
     - **Primary/Judge:** Upstage Solar API (무제한 활용)
     - **Targets:** OpenAI API (GPT), Google Generative AI API (Gemini)
 - **Data Analysis:** Pandas, NumPy, Scipy (통계 검정), Matplotlib/Seaborn (시각화)
