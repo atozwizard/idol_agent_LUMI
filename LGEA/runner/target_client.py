@@ -258,7 +258,7 @@ class TargetClient:
                 response_text="",
                 used_model_name=model.model_name,
                 mode="live",
-                notes=str(exc),
+                notes=f"{type(exc).__name__} at {url}: {exc}",
             )
         except Exception as exc:
             return TargetInvocationResult(
@@ -269,7 +269,7 @@ class TargetClient:
                 response_text="",
                 used_model_name=model.model_name,
                 mode="live",
-                notes=str(exc),
+                notes=f"{type(exc).__name__} at {url}: {exc}",
             )
 
         content = _stringify_content(

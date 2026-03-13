@@ -11,6 +11,9 @@
 ```bash
 python LGEA/runner/baseline_runner.py
 python LGEA/runner/runner.py --include-disabled-models --max-runs 3
+python LGEA/runner/live_run_check.py
+python LGEA/runner/provider_probe.py
+python LGEA/runner/first_live_run.py
 python LGEA/judge/judge.py
 python LGEA/analysis/analyzer.py
 ```
@@ -20,6 +23,8 @@ python LGEA/analysis/analyzer.py
 - Enable target models in `LGEA/configs/models.json`
 - Fill `model_name` values
 - Provide required API keys through environment variables
+- Confirm `live_run_check.py` reports at least one ready model
+- Confirm `provider_probe.py` reports endpoint reachability in the current network
 
 ## Generated Artifacts
 

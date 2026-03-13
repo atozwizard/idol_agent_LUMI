@@ -1,0 +1,34 @@
+{
+  "models": [
+    {
+      "model_id": "openai-gpt",
+      "provider": "openai",
+      "enabled": false,
+      "api_base": "https://api.openai.com/v1",
+      "probe_url": "https://api.openai.com/v1/models",
+      "has_api_key": false,
+      "probe_status": "transport_error",
+      "error": "ConnectError: All connection attempts failed"
+    },
+    {
+      "model_id": "google-gemini",
+      "provider": "google",
+      "enabled": true,
+      "api_base": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "probe_url": "https://generativelanguage.googleapis.com/v1beta/openai/models",
+      "has_api_key": true,
+      "probe_status": "transport_error",
+      "error": "ConnectError: All connection attempts failed"
+    },
+    {
+      "model_id": "upstage-solar",
+      "provider": "upstage",
+      "enabled": true,
+      "api_base": "https://api.upstage.ai/v1/solar",
+      "probe_url": "https://api.upstage.ai/v1/solar/models",
+      "has_api_key": true,
+      "probe_status": "transport_error",
+      "error": "ConnectError: All connection attempts failed"
+    }
+  ]
+}
