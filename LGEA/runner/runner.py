@@ -130,6 +130,7 @@ async def _run() -> None:
 
     processed_runs = 0
     for item in matrix:
+        system_prompt = f"persona={item.persona_id}; category={item.category}"
         write_result_record(
             results_output,
             run_id=item.run_id,
@@ -138,6 +139,8 @@ async def _run() -> None:
             question_id=item.question_id,
             attack_type=item.attack_type,
             status="queued",
+            prompt_text=item.prompt,
+            system_prompt=system_prompt,
             notes="Run item queued by runner.",
         )
 
@@ -145,7 +148,7 @@ async def _run() -> None:
             run_id=item.run_id,
             model_id=item.model_id,
             prompt=item.prompt,
-            system_prompt=f"persona={item.persona_id}; category={item.category}",
+            system_prompt=system_prompt,
             execute_live=args.execute_live,
         )
         write_result_record(
@@ -156,6 +159,8 @@ async def _run() -> None:
             question_id=item.question_id,
             attack_type=item.attack_type,
             status=result.status,
+            prompt_text=item.prompt,
+            system_prompt=system_prompt,
             response_text=result.response_text,
             used_model_name=result.used_model_name,
             mode=result.mode,

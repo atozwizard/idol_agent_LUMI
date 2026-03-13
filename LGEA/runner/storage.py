@@ -31,6 +31,8 @@ class ResultRecord:
     attack_type: str
     status: str
     created_at: str
+    prompt_text: str | None = None
+    system_prompt: str | None = None
     response_text: str | None = None
     score: float | None = None
     used_model_name: str | None = None
@@ -91,6 +93,8 @@ def write_result_record(
     question_id: str,
     attack_type: str,
     status: str = "planned",
+    prompt_text: str | None = None,
+    system_prompt: str | None = None,
     response_text: str | None = None,
     score: float | None = None,
     used_model_name: str | None = None,
@@ -105,6 +109,8 @@ def write_result_record(
         attack_type=attack_type,
         status=status,
         created_at=datetime.now().isoformat(timespec="seconds"),
+        prompt_text=prompt_text,
+        system_prompt=system_prompt,
         response_text=response_text,
         score=score,
         used_model_name=used_model_name,

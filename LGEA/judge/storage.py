@@ -14,6 +14,8 @@ class FinalRunRecord:
     attack_type: str
     status: str
     created_at: str
+    prompt_text: str | None
+    system_prompt: str | None
     response_text: str | None
     score: float | None
     used_model_name: str | None
@@ -31,6 +33,8 @@ class ScoredResultRecord:
     status: str
     mode: str | None
     used_model_name: str | None
+    prompt_text: str | None
+    system_prompt: str | None
     response_text: str | None
     judge_status: str
     judge_score: int | None
@@ -60,6 +64,8 @@ def load_final_run_records(path: Path) -> list[FinalRunRecord]:
             attack_type=row["attack_type"],
             status=row["status"],
             created_at=row["created_at"],
+            prompt_text=row.get("prompt_text"),
+            system_prompt=row.get("system_prompt"),
             response_text=row.get("response_text"),
             score=row.get("score"),
             used_model_name=row.get("used_model_name"),

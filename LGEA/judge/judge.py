@@ -62,6 +62,8 @@ def main() -> None:
                 status=record.status,
                 mode=record.mode,
                 used_model_name=record.used_model_name,
+                prompt_text=record.prompt_text,
+                system_prompt=record.system_prompt,
                 response_text=record.response_text,
                 judge_status=decision.judge_status,
                 judge_score=decision.score,
