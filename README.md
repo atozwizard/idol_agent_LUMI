@@ -172,3 +172,8 @@ uv run black .
 
 - `dev` 브랜치는 기본 챗봇 기능 외에 LLMOps 요소를 실험하는 브랜치입니다.
 - `.env.example`에는 일부 최신 설정이 아직 모두 반영되지 않았을 수 있으므로, 실제 옵션은 [config.py](/d:/01.%20study/01.sesac_upstage_ai/08.9주차_service%20deployment/idol_agent_LUMI/app/core/config.py)를 기준으로 확인하는 편이 안전합니다.
+## LGEA
+
+LGEA is the research workspace for evaluating the running LUMI service. Its FastAPI live-run path sends every question in `LGEA/configs/baseline_questions.json` to `/api/v1/chat/`, then runs internal router/response-layer/rag/tool surface checks from the same shared question set, and stores the responses as experiment artifacts.
+
+- Research guide: [.LGEA_README.md](.LGEA_README.md)

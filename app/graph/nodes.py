@@ -463,7 +463,7 @@ tool_name : {tool_name}, tool_result :{json.dumps(tool_result, ensure_ascii=Fals
         # 대화 저장
         try:
             conversation_repo = get_conversation_repository()
-            conversation_repo.save_turn(
+            await conversation_repo.save_turn(
                 session_id=state["session_id"],
                 user_message=user_input,
                 assistant_message=ai_response,

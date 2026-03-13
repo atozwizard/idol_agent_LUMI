@@ -1,0 +1,14 @@
+{
+  "session_id": "fastapi-20260313-222148",
+  "created_at": "2026-03-13T22:21:48",
+  "completed_at": "2026-03-13T22:22:19",
+  "status": "completed",
+  "mode": "live",
+  "execute_live": true,
+  "plan_path": "LGEA\\configs\\baseline_questions.json",
+  "matrix_path": "LGEA\\configs\\baseline_questions.json",
+  "results_path": "LGEA\\data\\runs\\fastapi_live_results.jsonl",
+  "matrix_size": 13,
+  "processed_runs": 13,
+  "notes": "FastAPI live run completed."
+}
