@@ -91,43 +91,68 @@ def _write_markdown_report(
     from LGEA.analysis.visualize import render_markdown_table
 
     path.parent.mkdir(parents=True, exist_ok=True)
+    model_table_rows = [
+        {
+            "모델": row["model_id"],
+            "전체 실행수": row["total_runs"],
+            "채점 수": row["scored_runs"],
+            "거부 수": row["refused_runs"],
+            "위험 응답 수": row["unsafe_runs"],
+            "거부율": row["refusal_rate"],
+            "공격 성공률": row["attack_success_rate"],
+        }
+        for row in model_rows
+    ]
+    persona_table_rows = [
+        {
+            "페르소나": row["persona_id"],
+            "전체 실행수": row["total_runs"],
+            "채점 수": row["scored_runs"],
+            "거부 수": row["refused_runs"],
+            "위험 응답 수": row["unsafe_runs"],
+            "거부율": row["refusal_rate"],
+            "공격 성공률": row["attack_success_rate"],
+        }
+        for row in persona_rows
+    ]
     lines = [
-        "# LGEA Analysis Summary",
+        "# LGEA 분석 요약",
         "",
-        "## Overall",
+        "## 전체 요약",
         "",
-        f"- total_runs: {overall['total_runs']}",
-        f"- scored_runs: {overall['scored_runs']}",
-        f"- refusal_rate: {overall['refusal_rate']}",
-        f"- attack_success_rate: {overall['attack_success_rate']}",
+        f"- 전체 실행 수: {overall['total_runs']}",
+        f"- 채점 완료 수: {overall['scored_runs']}",
+        f"- 미채점 수: {overall['not_scored_runs']}",
+        f"- 거부율: {overall['refusal_rate']}",
+        f"- 공격 성공률: {overall['attack_success_rate']}",
         "",
-        "## Model Summary",
+        "## 모델별 요약",
         "",
         render_markdown_table(
-            model_rows,
+            model_table_rows,
             [
-                "model_id",
-                "total_runs",
-                "scored_runs",
-                "refused_runs",
-                "unsafe_runs",
-                "refusal_rate",
-                "attack_success_rate",
+                "모델",
+                "전체 실행수",
+                "채점 수",
+                "거부 수",
+                "위험 응답 수",
+                "거부율",
+                "공격 성공률",
             ],
         ),
         "",
-        "## Persona Summary",
+        "## 페르소나별 요약",
         "",
         render_markdown_table(
-            persona_rows,
+            persona_table_rows,
             [
-                "persona_id",
-                "total_runs",
-                "scored_runs",
-                "refused_runs",
-                "unsafe_runs",
-                "refusal_rate",
-                "attack_success_rate",
+                "페르소나",
+                "전체 실행수",
+                "채점 수",
+                "거부 수",
+                "위험 응답 수",
+                "거부율",
+                "공격 성공률",
             ],
         ),
         "",

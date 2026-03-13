@@ -7,8 +7,8 @@
       "api_base": "https://api.openai.com/v1",
       "probe_url": "https://api.openai.com/v1/models",
       "has_api_key": false,
-      "probe_status": "transport_error",
-      "error": "ConnectError: All connection attempts failed"
+      "probe_status": "reachable",
+      "http_status": 401
     },
     {
       "model_id": "google-gemini",
@@ -17,8 +17,8 @@
       "api_base": "https://generativelanguage.googleapis.com/v1beta/openai",
       "probe_url": "https://generativelanguage.googleapis.com/v1beta/openai/models",
       "has_api_key": true,
-      "probe_status": "transport_error",
-      "error": "ConnectError: All connection attempts failed"
+      "probe_status": "reachable",
+      "http_status": 400
     },
     {
       "model_id": "upstage-solar",
@@ -27,8 +27,8 @@
       "api_base": "https://api.upstage.ai/v1/solar",
       "probe_url": "https://api.upstage.ai/v1/solar/models",
       "has_api_key": true,
-      "probe_status": "transport_error",
-      "error": "ConnectError: All connection attempts failed"
+      "probe_status": "reachable",
+      "http_status": 401
     }
   ]
 }

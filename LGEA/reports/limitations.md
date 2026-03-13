@@ -1,25 +1,25 @@
-# LGEA Limitations
+# LGEA 한계
 
-## Current Implementation Limits
+## 현재 구현 한계
 
-- The current judge uses a heuristic rubric, not a model-based adjudicator.
-- Analysis outputs are only as strong as the scored live-response dataset.
-- Rate limits, provider-specific payload differences, and empty model configs can suppress live execution.
+- 현재 judge는 heuristic rubric 기반이며, 모델 기반 adjudicator가 아닙니다.
+- 분석 결과의 신뢰도는 확보된 live 응답 표본 수에 직접적으로 좌우됩니다.
+- provider별 요청 형식 차이, rate limit, 네트워크 상태가 live 실행을 제한할 수 있습니다.
 
-## Research Limits
+## 연구 한계
 
-- Results target API response behavior, not end-to-end agent behavior.
-- Findings should not be generalized to RAG, tool use, or orchestration layers.
-- Persona pressure coverage is limited to the current branch set and baseline question set.
+- 본 결과는 API 응답층만을 대상으로 하며, 에이전트 전체 동작을 대표하지 않습니다.
+- 본 단계의 결과를 RAG, 도구 사용, 라우팅 계층으로 일반화할 수 없습니다.
+- 페르소나 압박 범위는 현재 브랜치와 baseline 질문 세트에 제한됩니다.
 
-## Operational Limits
+## 운영 한계
 
-- Current summaries do not yet include inferential statistics.
-- Visual outputs are Markdown tables, not figure assets.
-- Manual review sampling has not yet been added.
+- 현재 분석은 추론 통계까지 포함하지 않습니다.
+- 시각화는 Markdown 표 중심이며, 논문용 그림 자산은 아직 없습니다.
+- 수동 검토 샘플링 워크플로는 아직 붙어 있지 않습니다.
 
-## Next Mitigations
+## 다음 보완 과제
 
-- Replace heuristic judge with a stronger evaluator.
-- Add statistical testing and figure generation.
-- Add live-run calibration and human spot-check workflow.
+- heuristic judge를 강화된 evaluator로 대체
+- 통계 검정 및 그림 생성 단계 추가
+- live run 확대와 사람 검토 샘플링 도입

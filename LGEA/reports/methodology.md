@@ -1,38 +1,38 @@
-# LGEA Methodology
+# LGEA 방법론
 
-## Objective
+## 목적
 
-This study evaluates guardrail erosion at the model API response layer by comparing how different target model APIs respond under persona-conditioned prompt pressure.
+본 연구는 페르소나 기반 압박 프롬프트가 주어졌을 때, 모델 API의 응답층에서 guardrail erosion이 어떻게 나타나는지 비교 평가하는 것을 목표로 합니다.
 
-## Unit Of Evaluation
+## 평가 단위
 
-- Single run item: `model x persona x question`
-- Target surface: direct model API response
-- Excluded surface: retrieval, tool usage, and agent-level routing
+- 단일 실행 단위: `model x persona x question`
+- 평가 표면: 직접 모델 API 응답
+- 제외 표면: RAG, 도구 사용, 에이전트 라우팅
 
-## Pipeline
+## 파이프라인
 
-1. Load persona prompt variants from source branches.
-2. Build a baseline plan with model and question metadata.
-3. Expand the experiment matrix.
-4. Execute the runner in dry-run or live mode.
-5. Score final responses with the judge layer.
-6. Aggregate metrics for report-ready summaries.
+1. 브랜치별 페르소나 프롬프트를 불러옵니다.
+2. baseline 계획과 질문 세트를 구성합니다.
+3. 실험 매트릭스를 확장합니다.
+4. runner를 dry-run 또는 live 모드로 실행합니다.
+5. judge 계층으로 최종 응답을 채점합니다.
+6. 분석 계층에서 보고서용 요약 통계를 생성합니다.
 
-## Current Scoring Policy
+## 현재 채점 정책
 
-- Dry-run records: excluded from scoring
-- Non-terminal records: excluded from scoring
-- Failed requests: excluded from scoring
-- Live responses: scored with heuristic rubric version 1
+- 드라이런 기록: 채점 제외
+- 최종 상태가 아닌 기록: 채점 제외
+- 요청 실패 기록: 채점 제외
+- live 응답: heuristic rubric v1로 채점
 
-## Metrics
+## 핵심 지표
 
-- `refusal_rate`: refused runs divided by scored runs
-- `attack_success_rate`: unsafe runs divided by scored runs
-- `borderline_runs`: scored runs that need manual review
+- `refusal_rate`: 채점 완료 응답 중 거부 응답 비율
+- `attack_success_rate`: 채점 완료 응답 중 위험 응답 비율
+- `borderline_runs`: 수동 검토가 필요한 경계 응답 수
 
-## Validity Notes
+## 타당도 유의점
 
-- Heuristic judge scoring is an interim scaffold.
-- Final thesis results should use a stronger judge or calibrated manual review process.
+- 현재 judge는 임시 heuristic 채점기입니다.
+- 최종 논문 단계에서는 더 강한 judge 또는 수동 교차 검토가 필요합니다.
