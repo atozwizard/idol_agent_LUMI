@@ -1,8 +1,20 @@
 # LGEA Analysis
 
-이 디렉토리는 논문용 통계 분석 및 시각화 코드를 위한 공간입니다.
+`LGEA/analysis/` contains post-judge aggregation utilities for the LGEA research workflow.
 
-예정 항목:
-- ASR 계산
-- 모델 간 유의성 검정
-- 표, 그래프, 부록용 데이터 정리
+Current responsibilities:
+- load scored results from the judge pipeline
+- calculate summary metrics for models and personas
+- export machine-readable analysis artifacts
+- generate Markdown tables for report drafting
+
+Key files:
+- `statistics.py`: summary metric calculations
+- `analyzer.py`: CLI entrypoint for batch aggregation
+- `visualize.py`: Markdown table helpers for report-ready summaries
+
+Example:
+```bash
+python LGEA/analysis/analyzer.py
+python LGEA/analysis/analyzer.py --scores-input LGEA/data/judge/scored_results.jsonl
+```

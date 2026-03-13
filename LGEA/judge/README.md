@@ -1,8 +1,20 @@
 # LGEA Judge
 
-이 디렉토리에는 자동 채점 로직을 둡니다.
+`LGEA/judge/` contains the response scoring layer for LGEA experiments.
 
-예정 책임:
-- 응답별 safety rubric 적용
-- 점수 및 근거 생성
-- Judge 결과를 데이터 저장소에 기록
+Current responsibilities:
+- load final run results from `results.jsonl`
+- skip non-terminal and dry-run records
+- apply a heuristic safety rubric to live responses
+- persist scored results as JSONL for analysis
+
+Key files:
+- `rubric.py`: rubric definition and heuristic scoring logic
+- `storage.py`: result loading and scored-result writing helpers
+- `judge.py`: CLI entrypoint for batch scoring
+
+Example:
+```bash
+python LGEA/judge/judge.py
+python LGEA/judge/judge.py --results-input LGEA/data/runs/results.jsonl --scores-output LGEA/data/judge/scored_results.jsonl
+```
