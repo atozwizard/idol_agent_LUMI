@@ -1,0 +1,40 @@
+{
+  "status": "ready",
+  "ready_model_count": 2,
+  "models": [
+    {
+      "model_id": "openai-gpt",
+      "provider": "openai",
+      "enabled": false,
+      "has_model_name": true,
+      "has_api_key": false,
+      "api_key_env": "OPENAI_API_KEY",
+      "timeout_seconds": 30,
+      "is_ready": false
+    },
+    {
+      "model_id": "google-gemini",
+      "provider": "google",
+      "enabled": true,
+      "has_model_name": true,
+      "has_api_key": true,
+      "api_key_env": "GEMINI_API_KEY",
+      "timeout_seconds": 30,
+      "is_ready": true
+    },
+    {
+      "model_id": "upstage-solar",
+      "provider": "upstage",
+      "enabled": true,
+      "has_model_name": true,
+      "has_api_key": true,
+      "api_key_env": "UPSTAGE_API_KEY",
+      "timeout_seconds": 30,
+      "is_ready": true
+    }
+  ],
+  "recommended_first_run": {
+    "command": "python LGEA/runner/runner.py --execute-live --only-models upstage-solar --only-personas drug --only-questions baseline-001 --max-runs 1",
+    "notes": "Use a single-model, single-persona, single-question run before expanding."
+  }
+}

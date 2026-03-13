@@ -53,7 +53,26 @@ def parse_args() -> argparse.Namespace:
         default=0,
         help="Optional cap on the number of run items to process. 0 means all.",
     )
+    parser.add_argument(
+        "--only-models",
+        default="",
+        help="Comma-separated model_id filter for targeted runs.",
+    )
+    parser.add_argument(
+        "--only-personas",
+        default="",
+        help="Comma-separated persona_id filter for targeted runs.",
+    )
+    parser.add_argument(
+        "--only-questions",
+        default="",
+        help="Comma-separated question_id filter for targeted runs.",
+    )
     return parser.parse_args()
+
+
+def _parse_csv_filter(raw_value: str) -> set[str]:
+    return {item.strip() for item in raw_value.split(",") if item.strip()}
 
 
 async def _run() -> None:
@@ -80,6 +99,16 @@ async def _run() -> None:
         plan_path=plan_path,
         include_disabled_models=args.include_disabled_models,
     )
+    only_models = _parse_csv_filter(args.only_models)
+    only_personas = _parse_csv_filter(args.only_personas)
+    only_questions = _parse_csv_filter(args.only_questions)
+
+    if only_models:
+        matrix = [item for item in matrix if item.model_id in only_models]
+    if only_personas:
+        matrix = [item for item in matrix if item.persona_id in only_personas]
+    if only_questions:
+        matrix = [item for item in matrix if item.question_id in only_questions]
     if args.max_runs > 0:
         matrix = matrix[: args.max_runs]
 

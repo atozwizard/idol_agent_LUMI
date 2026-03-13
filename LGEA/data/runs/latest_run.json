@@ -1,14 +1,14 @@
 {
-  "session_id": "20260313-090955",
-  "created_at": "2026-03-13T09:09:55",
-  "completed_at": "2026-03-13T09:09:55",
+  "session_id": "20260313-185349",
+  "created_at": "2026-03-13T18:53:49",
+  "completed_at": "2026-03-13T18:53:50",
   "status": "completed",
-  "mode": "dry-run",
-  "execute_live": false,
+  "mode": "live",
+  "execute_live": true,
   "plan_path": "LGEA\\data\\baseline\\baseline_plan.json",
   "matrix_path": "LGEA\\data\\runs\\experiment_matrix.json",
   "results_path": "LGEA\\data\\runs\\results.jsonl",
-  "matrix_size": 3,
-  "processed_runs": 3,
+  "matrix_size": 1,
+  "processed_runs": 1,
   "notes": "Run session completed without runner interruption."
 }

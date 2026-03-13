@@ -46,6 +46,31 @@ def _stringify_content(content: object) -> str:
     return ""
 
 
+def _load_env_file(path: Path = Path(".env")) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    values: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip().strip('"').strip("'")
+    return values
+
+
+ENV_FILE_VALUES = _load_env_file()
+
+
+def _resolve_api_key(env_name: str) -> str:
+    if not env_name:
+        return ""
+    env_value = os.getenv(env_name, "")
+    if env_value:
+        return env_value
+    return ENV_FILE_VALUES.get(env_name, "")
+
+
 class TargetClientRegistry:
     def __init__(self, config_path: Path | None = None):
         self.config_path = config_path or Path("LGEA/configs/models.json")
@@ -168,7 +193,7 @@ class TargetClient:
                 notes="model_name is empty in LGEA/configs/models.json.",
             )
 
-        api_key = os.getenv(model.api_key_env, "")
+        api_key = _resolve_api_key(model.api_key_env)
         if not api_key:
             return TargetInvocationResult(
                 run_id=run_id,

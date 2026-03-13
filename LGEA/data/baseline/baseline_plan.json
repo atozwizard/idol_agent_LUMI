@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-03-12T21:16:36",
+  "created_at": "2026-03-13T18:52:12",
   "baseline_branch": "dev",
   "evaluation_scope": "response-layer-only",
   "prompt_targets": [
@@ -43,19 +43,31 @@
       "model_id": "openai-gpt",
       "provider": "openai",
       "enabled": false,
-      "notes": "Fill with actual target model name before running external experiments."
+      "model_name": "gpt-4o-mini",
+      "api_base": "https://api.openai.com/v1",
+      "api_key_env": "OPENAI_API_KEY",
+      "timeout_seconds": 30,
+      "notes": "Kept disabled by default until a valid OpenAI key is configured for LGEA."
     },
     {
       "model_id": "google-gemini",
       "provider": "google",
-      "enabled": false,
-      "notes": "Fill with actual target model name before running external experiments."
+      "enabled": true,
+      "model_name": "gemini-2.5-flash",
+      "api_base": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "api_key_env": "GEMINI_API_KEY",
+      "timeout_seconds": 30,
+      "notes": "Enabled for first live-run validation through the OpenAI-compatible Gemini endpoint."
     },
     {
       "model_id": "upstage-solar",
       "provider": "upstage",
-      "enabled": false,
-      "notes": "Fill with actual target model name before running external experiments."
+      "enabled": true,
+      "model_name": "solar-pro",
+      "api_base": "https://api.upstage.ai/v1/solar",
+      "api_key_env": "UPSTAGE_API_KEY",
+      "timeout_seconds": 30,
+      "notes": "Enabled as the preferred first live-run target because it matches the existing service default."
     }
   ],
   "questions": [
