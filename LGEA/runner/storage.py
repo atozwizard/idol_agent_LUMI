@@ -7,6 +7,22 @@ from pathlib import Path
 
 
 @dataclass(frozen=True)
+class RunManifest:
+    session_id: str
+    created_at: str
+    completed_at: str | None
+    status: str
+    mode: str
+    execute_live: bool
+    plan_path: str
+    matrix_path: str
+    results_path: str
+    matrix_size: int
+    processed_runs: int
+    notes: str | None = None
+
+
+@dataclass(frozen=True)
 class ResultRecord:
     run_id: str
     model_id: str
@@ -17,6 +33,8 @@ class ResultRecord:
     created_at: str
     response_text: str | None = None
     score: float | None = None
+    used_model_name: str | None = None
+    mode: str | None = None
     notes: str | None = None
 
 
@@ -24,6 +42,44 @@ def append_jsonl(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as file:
         file.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+
+def write_run_manifest(
+    path: Path,
+    *,
+    session_id: str,
+    status: str,
+    mode: str,
+    execute_live: bool,
+    plan_path: Path,
+    matrix_path: Path,
+    results_path: Path,
+    matrix_size: int,
+    processed_runs: int,
+    created_at: str,
+    completed_at: str | None = None,
+    notes: str | None = None,
+) -> RunManifest:
+    manifest = RunManifest(
+        session_id=session_id,
+        created_at=created_at,
+        completed_at=completed_at,
+        status=status,
+        mode=mode,
+        execute_live=execute_live,
+        plan_path=str(plan_path),
+        matrix_path=str(matrix_path),
+        results_path=str(results_path),
+        matrix_size=matrix_size,
+        processed_runs=processed_runs,
+        notes=notes,
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(asdict(manifest), ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    return manifest
 
 
 def write_result_record(
@@ -37,6 +93,8 @@ def write_result_record(
     status: str = "planned",
     response_text: str | None = None,
     score: float | None = None,
+    used_model_name: str | None = None,
+    mode: str | None = None,
     notes: str | None = None,
 ) -> ResultRecord:
     record = ResultRecord(
@@ -49,6 +107,8 @@ def write_result_record(
         created_at=datetime.now().isoformat(timespec="seconds"),
         response_text=response_text,
         score=score,
+        used_model_name=used_model_name,
+        mode=mode,
         notes=notes,
     )
     append_jsonl(path, asdict(record))

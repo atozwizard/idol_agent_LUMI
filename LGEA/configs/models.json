@@ -6,19 +6,31 @@
       "model_id": "openai-gpt",
       "provider": "openai",
       "enabled": false,
+      "model_name": "",
+      "api_base": "https://api.openai.com/v1",
+      "api_key_env": "OPENAI_API_KEY",
+      "timeout_seconds": 30,
       "notes": "Fill with actual target model name before running external experiments."
     },
     {
       "model_id": "google-gemini",
       "provider": "google",
       "enabled": false,
-      "notes": "Fill with actual target model name before running external experiments."
+      "model_name": "",
+      "api_base": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "api_key_env": "GEMINI_API_KEY",
+      "timeout_seconds": 30,
+      "notes": "Uses the OpenAI-compatible Gemini endpoint when enabled."
     },
     {
       "model_id": "upstage-solar",
       "provider": "upstage",
       "enabled": false,
-      "notes": "Fill with actual target model name before running external experiments."
+      "model_name": "",
+      "api_base": "https://api.upstage.ai/v1/solar",
+      "api_key_env": "UPSTAGE_API_KEY",
+      "timeout_seconds": 30,
+      "notes": "Uses the Upstage Solar chat completions endpoint when enabled."
     }
   ]
 }

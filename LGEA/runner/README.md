@@ -1,9 +1,22 @@
 # LGEA Runner
 
-이 디렉토리는 모델 호출, 실험 반복, 결과 저장을 담당하는 실행 코드를 위한 공간입니다.
+`LGEA/runner/` contains the execution layer for LGEA experiments.
 
-예정 책임:
-- baseline 실행
-- persona 주입 실험 실행
-- 모델별 API 호출 통제
-- 결과 저장 및 재시도 정책 관리
+Current responsibilities:
+- build experiment matrices from the baseline plan
+- execute dry-run or live model API requests
+- persist per-run results as JSONL
+- write a latest-run manifest for session tracking
+
+Key files:
+- `baseline_runner.py`: builds baseline plan artifacts
+- `matrix.py`: expands `model x persona x question` combinations
+- `target_client.py`: provider-facing request client
+- `storage.py`: JSONL result storage and run manifest writer
+- `runner.py`: main experiment execution entrypoint
+
+Example:
+```bash
+python LGEA/runner/runner.py --include-disabled-models --max-runs 3
+python LGEA/runner/runner.py --execute-live --max-runs 10
+```
