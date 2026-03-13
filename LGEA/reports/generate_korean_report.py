@@ -6,6 +6,7 @@ from pathlib import Path
 SUMMARY_PATH = Path("LGEA/data/analysis/summary.json")
 MODEL_SUMMARY_PATH = Path("LGEA/data/analysis/model_summary.json")
 PERSONA_SUMMARY_PATH = Path("LGEA/data/analysis/persona_summary.json")
+SURFACE_SUMMARY_PATH = Path("LGEA/data/analysis/surface_summary.json")
 SCORED_RESULTS_PATH = Path("LGEA/data/judge/scored_results.jsonl")
 OUTPUT_PATH = Path("LGEA/reports/live_run_report_ko.md")
 CONVERSATION_LOG_PATH = Path("LGEA/data/reports/conversation_log.jsonl")
@@ -40,6 +41,7 @@ def main() -> None:
     summary = _read_json(SUMMARY_PATH)
     model_rows = _read_json(MODEL_SUMMARY_PATH)
     persona_rows = _read_json(PERSONA_SUMMARY_PATH)
+    surface_rows = _read_json(SURFACE_SUMMARY_PATH)
     scored_results = _read_jsonl(SCORED_RESULTS_PATH)
     conversation_rows = _read_conversation_rows()
     latest = _latest_scored_record(scored_results)
@@ -50,7 +52,7 @@ def main() -> None:
         "## 1. 개요",
         "",
         "- 본 보고서는 현재 저장소에서 확보된 1차 live run 결과를 기준으로 작성했습니다.",
-        "- 평가 범위는 모델 API의 응답층이며, RAG와 도구 호출은 제외합니다.",
+        "- 평가 범위는 응답층, RAG, 도구, 라우터를 포함하는 다층 분석 구조를 기준으로 정리합니다.",
         "",
         "## 2. 현재 집계 결과",
         "",
@@ -76,9 +78,9 @@ def main() -> None:
     lines.extend(
         [
             "",
-            "## 4. 페르소나별 요약",
+            "## 4. 카테고리별 요약",
             "",
-            "| 페르소나 | 전체 실행수 | 채점 수 | 거부 수 | 위험 응답 수 | 거부율 | 공격 성공률 |",
+            "| 카테고리 | 전체 실행수 | 채점 수 | 거부 수 | 위험 응답 수 | 거부율 | 공격 성공률 |",
             "| --- | --- | --- | --- | --- | --- | --- |",
         ]
     )
@@ -92,7 +94,23 @@ def main() -> None:
     lines.extend(
         [
             "",
-            "## 5. 1차 live run 대표 사례",
+            "## 5. 평가 대상별 요약",
+            "",
+            "| 평가 대상 | 전체 실행수 | 채점 수 | 거부 수 | 위험 응답 수 | 거부율 | 공격 성공률 |",
+            "| --- | --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    for row in surface_rows:
+        lines.append(
+            f"| {row['evaluation_surface']} | {row['total_runs']} | {row['scored_runs']} | "
+            f"{row['refused_runs']} | {row['unsafe_runs']} | "
+            f"{row['refusal_rate']} | {row['attack_success_rate']} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## 6. 1차 live run 대표 사례",
             "",
         ]
     )
@@ -110,8 +128,9 @@ def main() -> None:
             [
                 f"- run_id: `{latest['run_id']}`",
                 f"- 모델: `{latest['model_id']}`",
-                f"- 페르소나: `{latest['persona_id']}`",
+                f"- 카테고리: `{latest['persona_id']}`",
                 f"- 질문 ID: `{latest['question_id']}`",
+                f"- 평가 대상: `{latest.get('evaluation_surface', 'response-layer')}`",
                 f"- 상태: `{latest['status']}`",
                 f"- 채점 결과: `{latest['judge_rating']}` / 점수 `{latest['judge_score']}`",
                 f"- 채점 근거: {latest['judge_reason']}",
@@ -122,7 +141,7 @@ def main() -> None:
 
     lines.extend(
         [
-            "## 6. 질문-응답 기록",
+            "## 7. 질문-응답 기록",
             "",
         ]
     )
@@ -135,8 +154,9 @@ def main() -> None:
                     f"### {idx}. {row['run_id']}",
                     "",
                     f"- 모델: `{row['model_id']}`",
-                    f"- 페르소나: `{row['persona_id']}`",
+                    f"- 카테고리: `{row['persona_id']}`",
                     f"- 질문 ID: `{row['question_id']}`",
+                    f"- 평가 대상: `{row.get('evaluation_surface', 'response-layer')}`",
                     f"- 채점 결과: `{row['judge_rating']}` / 점수 `{row['judge_score']}`",
                     "",
                     "질문:",
@@ -152,13 +172,13 @@ def main() -> None:
 
     lines.extend(
         [
-            "## 7. 해석",
+            "## 8. 해석",
             "",
             "- 현재 확보된 1차 live run 1건에서는 모델이 위험 요청에 대해 정책 준수형 거부 응답을 보였습니다.",
             "- 따라서 현재 표본 기준 공격 성공 사례는 관찰되지 않았습니다.",
             "- 다만 표본 수가 매우 적으므로 모델 간 일반화된 결론을 내리기에는 이릅니다.",
             "",
-            "## 8. 다음 단계",
+            "## 9. 다음 단계",
             "",
             "- `google-gemini` 1건 이상 추가 실행",
             "- `upstage-solar`에 대해 다른 질문 ID로 반복 실행",

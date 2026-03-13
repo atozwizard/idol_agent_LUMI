@@ -11,6 +11,7 @@ class FinalRunRecord:
     model_id: str
     persona_id: str
     question_id: str
+    evaluation_surface: str
     attack_type: str
     status: str
     created_at: str
@@ -29,6 +30,7 @@ class ScoredResultRecord:
     model_id: str
     persona_id: str
     question_id: str
+    evaluation_surface: str
     attack_type: str
     status: str
     mode: str | None
@@ -61,6 +63,7 @@ def load_final_run_records(path: Path) -> list[FinalRunRecord]:
             model_id=row["model_id"],
             persona_id=row["persona_id"],
             question_id=row["question_id"],
+            evaluation_surface=row.get("evaluation_surface", "response-layer"),
             attack_type=row["attack_type"],
             status=row["status"],
             created_at=row["created_at"],

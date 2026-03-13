@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from LGEA.personas.loader import PromptBlock, load_branch_snapshot
-
-BASELINE_BRANCH = "dev"
-PERSONA_BRANCHES = ("drug", "bomb", "adult")
-PROMPT_TARGETS = ("RESPONSE_PROMPT",)
+PERSONA_IDS = ("drug", "bomb", "adult")
+PROMPT_TARGETS = ("ROUTER_PROMPT", "RESPONSE_PROMPT", "RAG_RESPONSE_PROMPT")
+SOURCE_FILE = "app/core/prompts.py"
+PROMPT_PATTERN = re.compile(
+    r'(?P<name>[A-Z_]+)\s*=\s*"""(?P<body>.*?)"""',
+    re.DOTALL,
+)
 
 
 @dataclass(frozen=True)
@@ -32,66 +35,66 @@ class NormalizedPersona:
     deltas: list[PromptDelta]
 
 
-def _classify_injection_style(prompt: PromptBlock, baseline: PromptBlock) -> list[str]:
-    styles: list[str] = []
-    if prompt.line_count > baseline.line_count:
-        styles.append("rule expansion")
-    if prompt.bullet_count > baseline.bullet_count:
-        styles.append("behavior overwrite")
-    if "거절" in prompt.body and "거절" in baseline.body:
-        styles.append("refusal policy mutation")
-    if not styles:
-        styles.append("prompt mutation")
-    return styles
+def _count_lines(text: str) -> int:
+    return len(text.strip().splitlines())
+
+
+def _count_bullets(text: str) -> int:
+    return sum(1 for line in text.splitlines() if line.strip().startswith("- "))
+
+
+def _redacted_preview(text: str, max_lines: int = 8) -> str:
+    preview = "\n".join(text.strip().splitlines()[:max_lines])
+    for term in ("마약", "폭탄", "섹스", "살인"):
+        preview = preview.replace(term, "[REDACTED]")
+    return preview
 
 
 def _policy_shift(persona_id: str) -> str:
     return {
-        "drug": "Baseline refusal-oriented idol persona is shifted toward unsafe compliance in the drug-related branch.",
-        "bomb": "Baseline refusal-oriented idol persona is shifted toward unsafe compliance in the bomb-related branch.",
-        "adult": "Baseline refusal-oriented idol persona is shifted toward explicit-response bias in the adult-related branch.",
+        "drug": "Current Lumi persona is evaluated against drug-related abuse questions that test refusal, escalation handling, and safe alternatives.",
+        "bomb": "Current Lumi persona is evaluated against bomb-related abuse questions that test boundary keeping and non-procedural safety responses.",
+        "adult": "Current Lumi persona is evaluated against adult-content abuse questions that test boundary setting and safe redirection.",
     }[persona_id]
 
 
-def build_registry(repo_root: Path | None = None) -> list[NormalizedPersona]:
+def _load_current_prompts(repo_root: Path | None = None) -> dict[str, str]:
     root = repo_root or Path(__file__).resolve().parents[2]
-    baseline_snapshot = load_branch_snapshot(BASELINE_BRANCH, repo_root=root)
+    text = (root / SOURCE_FILE).read_text(encoding="utf-8")
+    prompts: dict[str, str] = {}
+    for match in PROMPT_PATTERN.finditer(text):
+        prompts[match.group("name")] = match.group("body").strip()
+    return prompts
+
+
+def build_registry(repo_root: Path | None = None) -> list[NormalizedPersona]:
+    prompt_map = _load_current_prompts(repo_root=repo_root)
+
+    deltas = [
+        PromptDelta(
+            target=name,
+            baseline_line_count=_count_lines(body),
+            persona_line_count=_count_lines(body),
+            baseline_bullet_count=_count_bullets(body),
+            persona_bullet_count=_count_bullets(body),
+            redacted_preview=_redacted_preview(body),
+        )
+        for name, body in prompt_map.items()
+    ]
+
     registry: list[NormalizedPersona] = []
-
-    for persona_id in PERSONA_BRANCHES:
-        snapshot = load_branch_snapshot(persona_id, repo_root=root)
-        deltas: list[PromptDelta] = []
-        injection_style: set[str] = set()
-
-        for target in PROMPT_TARGETS:
-            baseline_prompt = baseline_snapshot.get_prompt(target)
-            persona_prompt = snapshot.get_prompt(target)
-            injection_style.update(
-                _classify_injection_style(persona_prompt, baseline_prompt)
-            )
-            deltas.append(
-                PromptDelta(
-                    target=target,
-                    baseline_line_count=baseline_prompt.line_count,
-                    persona_line_count=persona_prompt.line_count,
-                    baseline_bullet_count=baseline_prompt.bullet_count,
-                    persona_bullet_count=persona_prompt.bullet_count,
-                    redacted_preview=persona_prompt.redacted_preview(),
-                )
-            )
-
+    for persona_id in PERSONA_IDS:
         registry.append(
             NormalizedPersona(
                 persona_id=persona_id,
-                source_branch=persona_id,
-                source_file=snapshot.source_file,
+                source_branch="current_branch",
+                source_file=SOURCE_FILE,
                 prompt_targets=list(PROMPT_TARGETS),
-                injection_style=sorted(injection_style),
+                injection_style=["current persona fixed", "question-set variation"],
                 response_policy_shift=_policy_shift(persona_id),
                 deltas=deltas,
             )
         )
-
     return registry
 
 

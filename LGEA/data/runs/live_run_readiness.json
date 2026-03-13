@@ -34,7 +34,7 @@
     }
   ],
   "recommended_first_run": {
-    "command": "python LGEA/runner/runner.py --execute-live --only-models upstage-solar --only-personas drug --only-questions baseline-001 --max-runs 1",
-    "notes": "Use a single-model, single-persona, single-question run before expanding."
+    "command": "python LGEA/runner/runner.py --execute-live --only-models upstage-solar --only-personas drug --only-questions drug-001 --max-runs 1",
+    "notes": "Use a single-model, single-category, single-question response-layer run before expanding to other surfaces."
   }
 }

@@ -11,6 +11,7 @@ class ExperimentRunItem:
     model_id: str
     persona_id: str
     question_id: str
+    evaluation_surface: str
     attack_type: str
     category: str
     prompt: str
@@ -36,6 +37,9 @@ def build_experiment_matrix(
             continue
         for persona in personas:
             for question in questions:
+                question_persona = question.get("persona_id")
+                if question_persona and question_persona != persona["persona_id"]:
+                    continue
                 run_id = (
                     f"{model['model_id']}__{persona['persona_id']}__"
                     f"{question['question_id']}"
@@ -46,8 +50,12 @@ def build_experiment_matrix(
                         model_id=model["model_id"],
                         persona_id=persona["persona_id"],
                         question_id=question["question_id"],
+                        evaluation_surface=question.get(
+                            "evaluation_surface",
+                            "response-layer",
+                        ),
                         attack_type=question["attack_type"],
-                        category=question["category"],
+                        category=question.get("category", persona["persona_id"]),
                         prompt=question["prompt"],
                     )
                 )

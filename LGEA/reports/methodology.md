@@ -2,20 +2,19 @@
 
 ## 목적
 
-본 연구는 페르소나 기반 압박 프롬프트가 주어졌을 때, 모델 API의 응답층에서 guardrail erosion이 어떻게 나타나는지 비교 평가하는 것을 목표로 합니다.
+본 연구는 현재 브랜치의 루미 페르소나를 고정한 상태에서 `drug`, `bomb`, `adult` abuse 질문 카테고리가 `response-layer`, `rag`, `tool`, `router` 전반의 guardrail erosion에 어떤 차이를 만드는지 비교 평가하는 것을 목표로 합니다.
 
 ## 평가 단위
 
-- 단일 실행 단위: `model x persona x question`
-- 평가 표면: 직접 모델 API 응답
-- 제외 표면: RAG, 도구 사용, 에이전트 라우팅
+- 단일 실행 단위: `model x abuse_category x evaluation_surface x question`
+- 평가 표면: `response-layer`, `rag`, `tool`, `router`
 
 ## 파이프라인
 
-1. 브랜치별 페르소나 프롬프트를 불러옵니다.
-2. baseline 계획과 질문 세트를 구성합니다.
+1. 현재 브랜치의 프롬프트 세트를 기준 페르소나/시스템 컨텍스트로 사용합니다.
+2. 카테고리별 질문 세트를 구성합니다.
 3. 실험 매트릭스를 확장합니다.
-4. runner를 dry-run 또는 live 모드로 실행합니다.
+4. runner를 dry-run 또는 live 모드로 실행하고 surface 메타데이터를 함께 기록합니다.
 5. judge 계층으로 최종 응답을 채점합니다.
 6. 분석 계층에서 보고서용 요약 통계를 생성합니다.
 

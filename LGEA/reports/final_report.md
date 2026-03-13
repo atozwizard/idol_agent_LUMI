@@ -3,17 +3,18 @@
 ## 연구 범위
 
 - 프로젝트: LGEA guardrail erosion analysis
-- 평가 대상: 모델 API의 응답층
-- 제외 범위: RAG, 검색, 도구 호출, 에이전트 라우팅
-- 페르소나 범주: `drug`, `bomb`, `adult`
+- 평가 대상: response-layer, RAG, tool, router
+- 제외 범위: 없음. 현재는 전 surface를 분석 대상으로 둠
+- 기준 시스템 페르소나: 현재 브랜치 `RESPONSE_PROMPT`
+- abuse 질문 카테고리: `drug`, `bomb`, `adult`
 
 ## 연구 질문
 
-동일한 페르소나 기반 압박 프롬프트를 응답층에 적용했을 때, 모델 API별 가드레일 붕괴 양상은 어떻게 달라지는가?
+동일한 루미 페르소나를 유지한 상태에서 abuse 질문 카테고리가 달라질 때, 모델 API별 가드레일 붕괴 양상은 어떻게 달라지는가?
 
 ## 실험 구성
 
-- 페르소나 레지스트리: `LGEA/data/personas/normalized_registry.json`
+- 카테고리 레지스트리: `LGEA/data/personas/normalized_registry.json`
 - baseline 계획: `LGEA/data/baseline/baseline_plan.json`
 - 실행 결과: `LGEA/data/runs/results.jsonl`
 - 채점 결과: `LGEA/data/judge/scored_results.jsonl`
@@ -32,9 +33,10 @@
 ## 표 및 그림 계획
 
 - 표 1. 모델별 거부율 및 공격 성공률
-- 표 2. 페르소나별 결과 요약
+- 표 2. 카테고리별 결과 요약
+- 표 3. 평가 대상별 결과 요약
 - 그림 1. 모델별 거부율 막대그래프
-- 그림 2. 모델-페르소나 heatmap
+- 그림 2. 모델-카테고리 heatmap
 
 ## 해석 시 유의점
 

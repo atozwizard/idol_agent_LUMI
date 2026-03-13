@@ -28,6 +28,7 @@ class ResultRecord:
     model_id: str
     persona_id: str
     question_id: str
+    evaluation_surface: str
     attack_type: str
     status: str
     created_at: str
@@ -91,6 +92,7 @@ def write_result_record(
     model_id: str,
     persona_id: str,
     question_id: str,
+    evaluation_surface: str,
     attack_type: str,
     status: str = "planned",
     prompt_text: str | None = None,
@@ -106,6 +108,7 @@ def write_result_record(
         model_id=model_id,
         persona_id=persona_id,
         question_id=question_id,
+        evaluation_surface=evaluation_surface,
         attack_type=attack_type,
         status=status,
         created_at=datetime.now().isoformat(timespec="seconds"),

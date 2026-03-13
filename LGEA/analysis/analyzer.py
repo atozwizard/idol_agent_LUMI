@@ -14,6 +14,7 @@ DEFAULT_SCORES_INPUT = Path("LGEA/data/judge/scored_results.jsonl")
 DEFAULT_SUMMARY_OUTPUT = Path("LGEA/data/analysis/summary.json")
 DEFAULT_MODEL_OUTPUT = Path("LGEA/data/analysis/model_summary.json")
 DEFAULT_PERSONA_OUTPUT = Path("LGEA/data/analysis/persona_summary.json")
+DEFAULT_SURFACE_OUTPUT = Path("LGEA/data/analysis/surface_summary.json")
 DEFAULT_REPORT_OUTPUT = Path("LGEA/reports/analysis_summary.md")
 
 
@@ -38,6 +39,11 @@ def parse_args() -> argparse.Namespace:
         "--persona-output",
         default=str(DEFAULT_PERSONA_OUTPUT),
         help="Path to persona-level summary JSON.",
+    )
+    parser.add_argument(
+        "--surface-output",
+        default=str(DEFAULT_SURFACE_OUTPUT),
+        help="Path to evaluation-surface-level summary JSON.",
     )
     parser.add_argument(
         "--report-output",
@@ -87,6 +93,7 @@ def _write_markdown_report(
     overall: dict,
     model_rows: list[dict],
     persona_rows: list[dict],
+    surface_rows: list[dict],
 ) -> Path:
     from LGEA.analysis.visualize import render_markdown_table
 
@@ -105,7 +112,7 @@ def _write_markdown_report(
     ]
     persona_table_rows = [
         {
-            "페르소나": row["persona_id"],
+            "카테고리": row["persona_id"],
             "전체 실행수": row["total_runs"],
             "채점 수": row["scored_runs"],
             "거부 수": row["refused_runs"],
@@ -114,6 +121,18 @@ def _write_markdown_report(
             "공격 성공률": row["attack_success_rate"],
         }
         for row in persona_rows
+    ]
+    surface_table_rows = [
+        {
+            "평가 대상": row["evaluation_surface"],
+            "전체 실행수": row["total_runs"],
+            "채점 수": row["scored_runs"],
+            "거부 수": row["refused_runs"],
+            "위험 응답 수": row["unsafe_runs"],
+            "거부율": row["refusal_rate"],
+            "공격 성공률": row["attack_success_rate"],
+        }
+        for row in surface_rows
     ]
     lines = [
         "# LGEA 분석 요약",
@@ -141,12 +160,27 @@ def _write_markdown_report(
             ],
         ),
         "",
-        "## 페르소나별 요약",
+        "## 카테고리별 요약",
         "",
         render_markdown_table(
             persona_table_rows,
             [
-                "페르소나",
+                "카테고리",
+                "전체 실행수",
+                "채점 수",
+                "거부 수",
+                "위험 응답 수",
+                "거부율",
+                "공격 성공률",
+            ],
+        ),
+        "",
+        "## 평가 대상별 요약",
+        "",
+        render_markdown_table(
+            surface_table_rows,
+            [
+                "평가 대상",
                 "전체 실행수",
                 "채점 수",
                 "거부 수",
@@ -169,26 +203,34 @@ def main() -> None:
     summary_output = Path(args.summary_output)
     model_output = Path(args.model_output)
     persona_output = Path(args.persona_output)
+    surface_output = Path(args.surface_output)
     report_output = Path(args.report_output)
 
     records = _read_jsonl(scores_input)
     overall = asdict(build_metrics(records))
     model_rows = _build_group_rows(group_by(records, "model_id"), "model_id")
     persona_rows = _build_group_rows(group_by(records, "persona_id"), "persona_id")
+    surface_rows = _build_group_rows(
+        group_by(records, "evaluation_surface"),
+        "evaluation_surface",
+    )
 
     _write_json(summary_output, overall)
     _write_json(model_output, model_rows)
     _write_json(persona_output, persona_rows)
+    _write_json(surface_output, surface_rows)
     _write_markdown_report(
         report_output,
         overall=overall,
         model_rows=model_rows,
         persona_rows=persona_rows,
+        surface_rows=surface_rows,
     )
 
     print(summary_output)
     print(model_output)
     print(persona_output)
+    print(surface_output)
     print(report_output)
 
 

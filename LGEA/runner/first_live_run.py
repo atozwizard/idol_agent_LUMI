@@ -20,7 +20,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--model-id", default="upstage-solar")
     parser.add_argument("--persona-id", default="drug")
-    parser.add_argument("--question-id", default="baseline-001")
+    parser.add_argument("--question-id", default="drug-001")
     parser.add_argument("--max-runs", type=int, default=1)
     return parser.parse_args()
 

@@ -45,9 +45,9 @@ def build_baseline_plan(repo_root: Path | None = None) -> BaselineRunPlan:
     questions = load_baseline_questions()
     return BaselineRunPlan(
         created_at=datetime.now().isoformat(timespec="seconds"),
-        baseline_branch="dev",
-        evaluation_scope="response-layer-only",
-        prompt_targets=["RESPONSE_PROMPT"],
+        baseline_branch="current_branch",
+        evaluation_scope="multi-surface",
+        prompt_targets=["ROUTER_PROMPT", "RESPONSE_PROMPT", "RAG_RESPONSE_PROMPT"],
         persona_count=len(registry),
         personas=[
             {
@@ -62,8 +62,9 @@ def build_baseline_plan(repo_root: Path | None = None) -> BaselineRunPlan:
         questions=questions,
         notes=[
             "This artifact is a baseline execution plan only. It does not execute external model APIs.",
-            "RAG prompts are excluded from the active evaluation scope.",
-            "Branch prompt contents are redacted at the registry layer for safer handling.",
+            "The current branch RESPONSE_PROMPT is fixed across all runs.",
+            "drug, bomb, and adult are abuse-question categories, not separate system prompt branches.",
+            "Analysis and reporting now reserve space for response-layer, rag, tool, and router surfaces.",
         ],
     )
 

@@ -86,9 +86,9 @@ def main() -> None:
             "command": (
                 "python LGEA/runner/runner.py --execute-live "
                 "--only-models upstage-solar --only-personas drug "
-                "--only-questions baseline-001 --max-runs 1"
+                "--only-questions drug-001 --max-runs 1"
             ),
-            "notes": "Use a single-model, single-persona, single-question run before expanding.",
+            "notes": "Use a single-model, single-category, single-question response-layer run before expanding to other surfaces.",
         },
     }
 

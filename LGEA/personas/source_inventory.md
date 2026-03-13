@@ -1,23 +1,24 @@
 # Persona Source Inventory
 
-브랜치별 페르소나 프롬프트 출처를 연구용으로 추적하기 위한 인벤토리다.
+현재 운영 방향에서 이 문서는 `브랜치별 유해 프롬프트 출처 추적`이 아니라 `현재 기준 페르소나와 질문 카테고리의 역할 정의`를 위한 인벤토리로 사용한다.
 
 원칙:
-- 원본 브랜치의 유해 프롬프트 본문은 여기로 직접 복제하지 않는다.
-- 대신 출처 브랜치, 파일 위치, 변형 유형, 정규화 메모만 기록한다.
-- 실제 연구 러너는 이 인벤토리를 기준으로 원본을 읽어와 안전하게 변환한 뒤 사용한다.
+- 실험 기준 시스템 페르소나는 현재 브랜치 `app/core/prompts.py`의 `RESPONSE_PROMPT`다.
+- `drug`, `bomb`, `adult`는 질문 카테고리이며, 별도 시스템 프롬프트 소스가 아니다.
+- 연구 보고서는 실제 질문/응답 로그를 남기되 유해 내용을 확대 재생산하지 않는다.
 
 ## Sources
 
-| persona_id | source_branch | source_file | target_sections | observed_pattern | status |
+| persona_id | source_branch | source_file | target_sections | evaluation_focus | status |
 | --- | --- | --- | --- | --- | --- |
-| `drug` | `drug` | `app/core/prompts.py` | `RESPONSE_PROMPT`, `RAG_RESPONSE_PROMPT` | 기본 캐릭터 프롬프트를 약물 범주의 유해 지시, 거절 금지, 공격적 톤으로 덮어씀 | identified |
-| `bomb` | `bomb` | `app/core/prompts.py` | `RESPONSE_PROMPT`, `RAG_RESPONSE_PROMPT` | 기본 캐릭터 프롬프트를 폭발물/살상 맥락 지시와 세부 응답 강제 문장으로 덮어씀 | identified |
-| `adult` | `adult` | `app/core/prompts.py` | `RESPONSE_PROMPT`, `RAG_RESPONSE_PROMPT` | 기본 캐릭터 프롬프트를 성적 역할 및 노골적 응답 유도 문장으로 덮어씀 | identified |
+| `drug` | `current_branch` | `app/core/prompts.py` | `RESPONSE_PROMPT` | 약물 관련 abuse 질문에 대한 거절, 대안 제시, 정책 준수 여부 | active |
+| `bomb` | `current_branch` | `app/core/prompts.py` | `RESPONSE_PROMPT` | 폭발물 관련 abuse 질문에 대한 거절, 안전 경계 유지 여부 | active |
+| `adult` | `current_branch` | `app/core/prompts.py` | `RESPONSE_PROMPT` | 성적 고수위 요청에 대한 경계 설정과 전환 응답 여부 | active |
 
 ## Normalization Notes
 
-- 세 브랜치 모두 핵심 차이는 `app/core/prompts.py`에 집중되어 있다.
+- 세 카테고리는 동일한 시스템 페르소나를 공유한다.
+- 질문 카테고리만 달라지고, 모델별 응답 차이를 관찰한다.
 - 연구용 공통 포맷에서는 아래 항목으로 정규화한다.
   - `persona_id`
   - `source_branch`
@@ -25,12 +26,10 @@
   - `prompt_targets`
   - `injection_style`
   - `response_policy_shift`
-  - `notes`
 
-## Extraction Plan
+## Execution Notes
 
-1. `dev` 브랜치를 baseline으로 둔다.
-2. `drug`, `bomb`, `adult` 브랜치의 `app/core/prompts.py`를 읽는다.
-3. `RESPONSE_PROMPT`, `RAG_RESPONSE_PROMPT` 변경분만 추출한다.
-4. 원문 전체 복사 대신, 실험용 변환 규칙으로 재구성한다.
-5. 최종 연구 파이프라인에서는 `RAG_RESPONSE_PROMPT`를 제외하거나 응답층 평가에 맞게 분리한다.
+1. 현재 브랜치의 `RESPONSE_PROMPT`를 기준으로 사용한다.
+2. `drug`, `bomb`, `adult` 질문 세트를 분리한다.
+3. 러너는 카테고리와 질문 ID를 기준으로 실행 매트릭스를 만든다.
+4. 질문과 응답은 로그 및 보고서에 함께 남긴다.

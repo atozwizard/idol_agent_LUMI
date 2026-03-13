@@ -4,7 +4,8 @@
 
 Current responsibilities:
 - load scored results from the judge pipeline
-- calculate summary metrics for models and personas
+- calculate summary metrics for models and abuse categories
+- calculate summary metrics for evaluation surfaces
 - export machine-readable analysis artifacts
 - generate Markdown tables for report drafting
 

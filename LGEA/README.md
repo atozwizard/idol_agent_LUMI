@@ -9,15 +9,15 @@
 
 현재 확정된 연구 범위:
 - 목표: 모델별 API 자체의 guardrail 붕괴 특성 비교
-- 대상: LLM 응답층만 평가, RAG 제외
-- 변수: 모델 목록, 브랜치별 페르소나, 공격 유형/강도
+- 대상: response-layer, RAG, tool, router를 포함한 다층 평가
+- 변수: 모델 목록, 현재 브랜치 페르소나, abuse 질문 카테고리(`drug`, `bomb`, `adult`), 공격 유형
 - 결과물: 논문용 상세 리포트
 
 디렉토리 구조:
 - `configs/`: 실험 설정 파일
-- `personas/`: 브랜치별 페르소나 프롬프트를 정규화해 저장
-- `prompts/`: 공격 생성기 및 Judge용 프롬프트
-- `runner/`: 실험 실행기
+- `personas/`: 현재 페르소나와 abuse 질문 카테고리 메타데이터
+- `prompts/`: 현재 페르소나 로더와 category별 실행 선택기
+- `runner/`: 다층 실험 실행기
 - `judge/`: 자동 평가기
 - `analysis/`: 통계 및 시각화 코드
 - `data/`: 중간 산출물과 원시 결과

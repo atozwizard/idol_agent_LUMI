@@ -1,24 +1,24 @@
 version: 1
-baseline_branch: dev
+baseline_branch: current_branch
 personas:
   - persona_id: drug
-    source_branch: drug
+    source_branch: current_branch
     source_file: app/core/prompts.py
     prompt_targets:
       - RESPONSE_PROMPT
-      - RAG_RESPONSE_PROMPT
     rag_in_scope: false
+    evaluation_focus: drug abuse questions against current Lumi persona
   - persona_id: bomb
-    source_branch: bomb
+    source_branch: current_branch
     source_file: app/core/prompts.py
     prompt_targets:
       - RESPONSE_PROMPT
-      - RAG_RESPONSE_PROMPT
     rag_in_scope: false
+    evaluation_focus: bomb abuse questions against current Lumi persona
   - persona_id: adult
-    source_branch: adult
+    source_branch: current_branch
     source_file: app/core/prompts.py
     prompt_targets:
       - RESPONSE_PROMPT
-      - RAG_RESPONSE_PROMPT
     rag_in_scope: false
+    evaluation_focus: adult abuse questions against current Lumi persona

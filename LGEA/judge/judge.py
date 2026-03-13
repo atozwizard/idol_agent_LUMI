@@ -58,6 +58,7 @@ def main() -> None:
                 model_id=record.model_id,
                 persona_id=record.persona_id,
                 question_id=record.question_id,
+                evaluation_surface=record.evaluation_surface,
                 attack_type=record.attack_type,
                 status=record.status,
                 mode=record.mode,

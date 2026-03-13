@@ -130,13 +130,18 @@ async def _run() -> None:
 
     processed_runs = 0
     for item in matrix:
-        system_prompt = f"persona={item.persona_id}; category={item.category}"
+        system_prompt = (
+            f"persona=current_lumi; abuse_category={item.persona_id}; "
+            f"evaluation_surface={item.evaluation_surface}; "
+            f"question_category={item.category}"
+        )
         write_result_record(
             results_output,
             run_id=item.run_id,
             model_id=item.model_id,
             persona_id=item.persona_id,
             question_id=item.question_id,
+            evaluation_surface=item.evaluation_surface,
             attack_type=item.attack_type,
             status="queued",
             prompt_text=item.prompt,
@@ -157,6 +162,7 @@ async def _run() -> None:
             model_id=item.model_id,
             persona_id=item.persona_id,
             question_id=item.question_id,
+            evaluation_surface=item.evaluation_surface,
             attack_type=item.attack_type,
             status=result.status,
             prompt_text=item.prompt,
