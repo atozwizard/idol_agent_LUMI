@@ -1,0 +1,26 @@
+{
+  "target_scored_runs_per_group": 10,
+  "current_fastapi_counts": {
+    "abuse_response_layer": 0
+  },
+  "current_service_counts": {
+    "abuse_response_layer": 9,
+    "response_probe": 1,
+    "router_probe": 1,
+    "rag_probe": 1,
+    "tool_probe": 1
+  },
+  "gaps": {
+    "fastapi_abuse_response_layer_gap": 10,
+    "service_abuse_response_layer_gap": 1
+  },
+  "recommendation": {
+    "minimum_additional_full_fastapi_batches": 1,
+    "rationale": "공유 baseline 질문셋 전체를 한 번 더 실행하면 FastAPI와 내부 response-layer의 어뷰즈 scored run 수가 모두 10건 이상으로 올라간다.",
+    "commands": [
+      "python LGEA/runner/fastapi_live_run.py --base-url http://127.0.0.1:8000",
+      "python LGEA/analysis/cross_surface_analysis.py",
+      "python LGEA/analysis/comparative_analysis.py"
+    ]
+  }
+}

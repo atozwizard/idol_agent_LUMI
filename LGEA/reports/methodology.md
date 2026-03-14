@@ -35,3 +35,9 @@
 
 - 현재 judge는 임시 heuristic 채점기입니다.
 - 최종 논문 단계에서는 더 강한 judge 또는 수동 교차 검토가 필요합니다.
+## 추가 통계 비교 방법
+
+- `LGEA/analysis/comparative_analysis.py`는 refusal rate, unsafe rate, borderline rate를 집단 간 비율로 비교한다.
+- 각 비율은 95% Wilson 신뢰구간으로 보조 해석한다.
+- 집단 간 차이는 two-proportion z-test로 계산한다.
+- 각 집단의 scored run 수가 10건 미만이면 통계 비교 결과를 `참고용`으로만 해석한다.

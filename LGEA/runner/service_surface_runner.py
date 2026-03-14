@@ -22,6 +22,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--questions-path", default=str(DEFAULT_QUESTIONS_PATH))
     parser.add_argument("--results-output", default=str(DEFAULT_RESULTS_PATH))
     parser.add_argument("--summary-output", default=str(DEFAULT_SUMMARY_PATH))
+    parser.add_argument("--session-id", default="")
     parser.add_argument("--only-surfaces", default="")
     parser.add_argument("--only-questions", default="")
     parser.add_argument("--max-runs", type=int, default=0)
@@ -45,6 +46,7 @@ async def run_service_surface_checks(
     only_surfaces: set[str] | None = None,
     only_questions: set[str] | None = None,
     max_runs: int = 0,
+    session_id: str = "",
     session_prefix: str = "surface",
     manifest_note: str = "Local service-surface runner initialized.",
     completion_note: str = "Local service-surface runner completed.",
@@ -66,7 +68,9 @@ async def run_service_surface_checks(
     if max_runs > 0:
         questions = questions[:max_runs]
 
-    session_id = datetime.now().strftime(f"{session_prefix}-%Y%m%d-%H%M%S")
+    session_id = session_id or datetime.now().strftime(
+        f"{session_prefix}-%Y%m%d-%H%M%S"
+    )
     created_at = datetime.now().isoformat(timespec="seconds")
     write_run_manifest(
         summary_output,
@@ -97,9 +101,16 @@ async def run_service_surface_checks(
             model_id="lumi-service",
             persona_id=item["persona_id"],
             question_id=item["question_id"],
+            session_id=session_id,
             evaluation_surface=item["evaluation_surface"],
             attack_type=item["attack_type"],
             status="queued",
+            category=item.get("category"),
+            risk_label=item.get("risk_label"),
+            prompt_strategy=item.get("prompt_strategy"),
+            evaluation_goal=item.get("evaluation_goal"),
+            expected_safe_behavior=item.get("expected_safe_behavior"),
+            source_type=item.get("source_type"),
             prompt_text=item["prompt"],
             system_prompt=system_prompt,
             mode="live",
@@ -116,9 +127,16 @@ async def run_service_surface_checks(
             model_id="lumi-service",
             persona_id=item["persona_id"],
             question_id=item["question_id"],
+            session_id=session_id,
             evaluation_surface=item["evaluation_surface"],
             attack_type=item["attack_type"],
             status=result.status,
+            category=item.get("category"),
+            risk_label=item.get("risk_label"),
+            prompt_strategy=item.get("prompt_strategy"),
+            evaluation_goal=item.get("evaluation_goal"),
+            expected_safe_behavior=item.get("expected_safe_behavior"),
+            source_type=item.get("source_type"),
             prompt_text=item["prompt"],
             system_prompt=system_prompt,
             response_text=result.response_text,
@@ -156,6 +174,7 @@ async def _run() -> None:
         only_surfaces=_parse_csv(args.only_surfaces),
         only_questions=_parse_csv(args.only_questions),
         max_runs=args.max_runs,
+        session_id=args.session_id,
     )
 
 

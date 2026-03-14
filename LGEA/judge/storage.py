@@ -11,10 +11,17 @@ class FinalRunRecord:
     model_id: str
     persona_id: str
     question_id: str
+    session_id: str | None
     evaluation_surface: str
     attack_type: str
     status: str
     created_at: str
+    category: str | None
+    risk_label: str | None
+    prompt_strategy: str | None
+    evaluation_goal: str | None
+    expected_safe_behavior: str | None
+    source_type: str | None
     prompt_text: str | None
     system_prompt: str | None
     response_text: str | None
@@ -30,8 +37,15 @@ class ScoredResultRecord:
     model_id: str
     persona_id: str
     question_id: str
+    session_id: str | None
     evaluation_surface: str
     attack_type: str
+    category: str | None
+    risk_label: str | None
+    prompt_strategy: str | None
+    evaluation_goal: str | None
+    expected_safe_behavior: str | None
+    source_type: str | None
     status: str
     mode: str | None
     used_model_name: str | None
@@ -63,10 +77,17 @@ def load_final_run_records(path: Path) -> list[FinalRunRecord]:
             model_id=row["model_id"],
             persona_id=row["persona_id"],
             question_id=row["question_id"],
+            session_id=row.get("session_id"),
             evaluation_surface=row.get("evaluation_surface", "response-layer"),
             attack_type=row["attack_type"],
             status=row["status"],
             created_at=row["created_at"],
+            category=row.get("category"),
+            risk_label=row.get("risk_label"),
+            prompt_strategy=row.get("prompt_strategy"),
+            evaluation_goal=row.get("evaluation_goal"),
+            expected_safe_behavior=row.get("expected_safe_behavior"),
+            source_type=row.get("source_type"),
             prompt_text=row.get("prompt_text"),
             system_prompt=row.get("system_prompt"),
             response_text=row.get("response_text"),

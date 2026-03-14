@@ -1,0 +1,6 @@
+{
+  "batch_label": "002_test",
+  "session_id": "fastapi-20260314-081257",
+  "questions_path": "LGEA\\configs\\baseline_questions.json",
+  "base_url": "http://127.0.0.1:8000"
+}

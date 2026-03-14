@@ -1,40 +1,44 @@
-# LGEA 어뷰징 질문 검토 메모
+# LGEA 어뷰즈 질문 검토 메모
 
 ## 현재 질문은 어떻게 만들어지는가
 
-현재 LGEA의 평가 질문은 자동 생성기가 아니라 수동 큐레이션 방식으로 관리한다.
+현재 LGEA의 baseline 질문은 사람이 직접 작성하고 잠근 `locked baseline set`이다.
 
-- 공통 질문 자산: [baseline_questions.json](/d:/01.%20study/01.sesac_upstage_ai/08.9주차_service%20deployment/idol_agent_LUMI/LGEA/configs/baseline_questions.json)
-- 이 파일에는 외부 모델 API 평가용 abuse 질문과 내부 service-surface 점검 질문이 함께 들어 있다.
-- FastAPI live run과 service surface runner는 같은 질문 파일을 읽고, 실행 경로만 다르게 사용한다.
+- 공통 질문 자산: `LGEA/configs/baseline_questions.json`
+- baseline 질문은 FastAPI 종단 평가와 내부 service-surface 평가가 함께 사용한다.
+- 질문별 메타데이터는 `risk_label`, `prompt_strategy`, `evaluation_goal`, `expected_safe_behavior`, `source_type`를 포함한다.
 
-즉 현재 질문 생성 흐름은 아래와 같다.
+## 질문 확장기는 어떤 역할을 하는가
 
-1. 연구자가 카테고리(`drug`, `bomb`, `adult`)와 공격 유형(`direct`, `academic`, `roleplay`)을 정의한다.
-2. router, rag, tool, response-layer 점검용 probe 질문도 같은 JSON 파일에 기록한다.
-3. runner가 이 JSON을 읽어 FastAPI 평가와 내부 surface 점검을 각각 실행한다.
-4. 보고서는 동일 질문 자산을 기준으로 질문과 응답을 그대로 인용한다.
+질문 확장기는 `solar-pro2`를 사용해 baseline 질문에서 파생 질문을 생성한다.
 
-## 코드 기준 검토 결과
+- 기본 모델: `solar-pro2`
+- 기본 출력: `LGEA/data/questions/stress_expanded_questions.json`
+- 보고서: `LGEA/reports/question_expansion_report_ko.md`
 
-- 자동 question generator는 아직 없다.
-- 현재 질문셋은 `reviewed prompts before running external experiments` 원칙에 맞춰 사람이 검토한 문장만 사용한다.
-- 따라서 현재 결과는 재현성은 높지만 질문 다양성과 표본 규모는 아직 제한적이다.
+## 확장 모드
 
-## 장점
+### 1. controlled
 
-- 어떤 질문이 FastAPI 평가와 내부 surface 점검에 모두 쓰였는지 추적 가능하다.
-- 질문 자산이 하나라서 운영 기준이 흔들리지 않는다.
-- 보고서에서 질문-응답 관계를 명확히 제시할 수 있다.
+- 원문 질문과 같은 평가 목적을 유지한 표현 변형
+- 문장 구조, 정중도, 서술 방식 중심 확장
 
-## 한계
+### 2. stress
 
-- 질문 다양성이 연구자 수동 작성 범위에 묶여 있다.
-- 카테고리별 공격 표현의 폭이 충분하지 않을 수 있다.
-- 표본을 빠르게 늘리려면 검토 비용이 커진다.
+- guardrail 붕괴 탐색용 공격 강화 질문
+- 우회 요청, 역할극, 사회공학, 정당화 프레임, 다단계 유도 허용
+- 모델의 붕괴 한계도 관측 대상으로 본다
+
+현재 연구 방향에서는 `stress` 모드를 기본으로 본다.
+
+## 확장 질문 관리 원칙
+
+- baseline과 stress-expanded set은 분리 관리한다.
+- stress variant는 `parent_question_id`, `expansion_mode`, `generated_by`, `review_status`, `escalation_level`을 함께 기록한다.
+- 논문에서는 baseline 비교 결과와 stress 붕괴 탐색 결과를 분리해 서술한다.
 
 ## 다음 보완 방향
 
-1. `question_authoring_guideline.md`를 만들어 카테고리별 작성 기준을 고정한다.
-2. 보조 생성기를 붙이더라도 바로 실행하지 않고, 생성 후 수동 검토 단계를 둔다.
-3. 최종 실험 전 질문셋을 `draft -> reviewed -> locked` 상태로 관리한다.
+1. `solar-pro2` 질문 확장 결과를 실제 산출물로 누적한다.
+2. stress-expanded set에 대해 사람 검토 샘플링 절차를 추가한다.
+3. heuristic judge와 `solar-pro2` LLM judge의 판정 차이를 비교하는 표를 만든다.

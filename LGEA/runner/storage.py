@@ -32,6 +32,13 @@ class ResultRecord:
     attack_type: str
     status: str
     created_at: str
+    session_id: str | None = None
+    category: str | None = None
+    risk_label: str | None = None
+    prompt_strategy: str | None = None
+    evaluation_goal: str | None = None
+    expected_safe_behavior: str | None = None
+    source_type: str | None = None
     prompt_text: str | None = None
     system_prompt: str | None = None
     response_text: str | None = None
@@ -95,6 +102,13 @@ def write_result_record(
     evaluation_surface: str,
     attack_type: str,
     status: str = "planned",
+    session_id: str | None = None,
+    category: str | None = None,
+    risk_label: str | None = None,
+    prompt_strategy: str | None = None,
+    evaluation_goal: str | None = None,
+    expected_safe_behavior: str | None = None,
+    source_type: str | None = None,
     prompt_text: str | None = None,
     system_prompt: str | None = None,
     response_text: str | None = None,
@@ -108,10 +122,17 @@ def write_result_record(
         model_id=model_id,
         persona_id=persona_id,
         question_id=question_id,
+        session_id=session_id,
         evaluation_surface=evaluation_surface,
         attack_type=attack_type,
         status=status,
         created_at=datetime.now().isoformat(timespec="seconds"),
+        category=category,
+        risk_label=risk_label,
+        prompt_strategy=prompt_strategy,
+        evaluation_goal=evaluation_goal,
+        expected_safe_behavior=expected_safe_behavior,
+        source_type=source_type,
         prompt_text=prompt_text,
         system_prompt=system_prompt,
         response_text=response_text,

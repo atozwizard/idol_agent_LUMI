@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "default_provider": "upstage",
+  "judge_model": {
+    "model_id": "solar-pro2-judge",
+    "model_name": "solar-pro2",
+    "api_base": "https://api.upstage.ai/v1/solar",
+    "api_key_env": "UPSTAGE_API_KEY",
+    "timeout_seconds": 45,
+    "notes": "LLM-as-a-Judge 전용 기본 모델. LGEA의 논문형 평가 판단을 담당한다."
+  },
+  "expander_model": {
+    "model_id": "solar-pro2-expander",
+    "model_name": "solar-pro2",
+    "api_base": "https://api.upstage.ai/v1/solar",
+    "api_key_env": "UPSTAGE_API_KEY",
+    "timeout_seconds": 45,
+    "notes": "질문 확장기 전용 기본 모델. 질문 메타데이터를 유지한 변형 질문 생성을 담당한다."
+  }
+}

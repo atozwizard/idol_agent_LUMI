@@ -48,3 +48,13 @@
 - `google-gemini` 1건 이상 live run 확보
 - `upstage-solar` 추가 질문 표본 확보
 - live 결과 기반 분석 요약 재생성
+## 추가 결과 해석 계층
+
+현재 보고 체계는 아래 산출물을 기준으로 파일럿 해석과 통계 비교를 분리한다.
+
+- `LGEA/data/analysis/cross_surface_summary.json`
+- `LGEA/reports/cross_surface_analysis_ko.md`
+- `LGEA/data/analysis/comparative_stats.json`
+- `LGEA/reports/comparative_stats_ko.md`
+
+이 구조를 통해 `다층 안전성 평가 프레임워크 제안`과 `반복 표본 축적 이후 통계적 우월성 검정`을 같은 파이프라인 위에서 이어갈 수 있다.
